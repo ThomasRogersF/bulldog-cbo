@@ -75,7 +75,10 @@ export const es = {
 		openShiftCta: 'Abrir turno',
 		orderConfirmed: 'Orden confirmada',
 		items: 'productos',
-		selectPayment: 'Selecciona método de pago'
+		selectPayment: 'Selecciona método de pago',
+		ordersShort: 'órdenes',
+		soldToday: 'vendido hoy',
+		salesWontRegister: 'Las ventas no se registrarán correctamente'
 	},
 	orders: {
 		title: 'Pedidos',
@@ -236,7 +239,20 @@ export const es = {
 		notes: 'Notas',
 		notesPlaceholder: 'Notas del turno (opcional)',
 		cashExpectedHint: 'Efectivo inicial + ventas en efectivo USD',
-		noHistory: 'Sin turnos previos'
+		noHistory: 'Sin turnos previos',
+		summary: 'Resumen del turno',
+		cashClose: 'Cierre de caja',
+		countedCash: 'Efectivo contado (USD)',
+		expectedShort: 'Esperado',
+		noDifference: 'Sin diferencia',
+		surplus: 'Sobrante',
+		shortage: 'Faltante',
+		topItems: 'Más vendidos',
+		greetingMorning: 'Buenos días',
+		greetingAfternoon: 'Buenas tardes',
+		greetingEvening: 'Buenas noches',
+		yesterday: 'Ayer',
+		ordersShort: 'órdenes'
 	},
 	settings: {
 		title: 'Configuración',

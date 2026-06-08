@@ -791,6 +791,24 @@ export const ordersDb = {
 			items: ((r.order_items as Row[]) ?? []).map(mapOrderItem)
 		}));
 	},
+	// Confirmed orders (with their items) for a shift — drives the close summary
+	// (payment breakdown, Bs total, top items) from a single query.
+	async listConfirmedForShift(shiftId: string, limit = 500): Promise<OrderWithItems[]> {
+		const rows = ok<Row[]>(
+			await supabase
+				.from('orders')
+				.select(`${ORDER_SELECT}, order_items(*)`)
+				.eq('shift_id', shiftId)
+				.eq('status', 'confirmed')
+				.is('deleted_at', null)
+				.order('created_at', { ascending: false })
+				.limit(limit)
+		);
+		return rows.map((r) => ({
+			...mapOrder(r),
+			items: ((r.order_items as Row[]) ?? []).map(mapOrderItem)
+		}));
+	},
 	async update(
 		id: string,
 		patch: { orderType?: OrderType; customerId?: string | null; notes?: string | null }

@@ -3,6 +3,31 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.5] — 2026-06-08
+
+Shift open/close UX overhaul + POS shift context.
+
+- Close shift: redesigned the modal into a proper end-of-day flow — an
+  read-only **Resumen del turno** (shift # + duration, prominent USD total with
+  Bs secondary, order count, payment-method breakdown, top 3 items by qty)
+  above a **Cierre de caja** section. Counted-cash input shows the expected
+  amount and a live variance (✅ sin diferencia / ⬆️ sobrante / ⬇️ faltante),
+  notes, a big red "Cerrar turno" button and a small "Cancelar" link. The modal
+  body scrolls on mobile.
+- Open shift: friendly time-based greeting (Buenos días/tardes/noches 👋) with
+  the worker's name and the last closed shift's takings ("Ayer: N órdenes ·
+  $X.XX") above the opening-cash field.
+- Permissions: any authenticated user (owner or worker) can close a shift —
+  verified there was no owner-only guard in `shiftsDb.close()` or on the close
+  button to remove (the route + RLS already allow workers).
+- POS: a context strip below the TopBar — when a shift is open it shows
+  "Turno #N · N órdenes · $X.XX vendido hoy"; when none is open it shows a
+  yellow warning ("Las ventas no se registrarán correctamente") with an
+  "Abrir turno →" link, replacing the old full-screen block so the menu stays
+  usable.
+- Data layer: add `ordersDb.listConfirmedForShift()` (confirmed orders with
+  items) to drive the close summary from one query.
+
 ## [0.0.4] — 2026-06-08
 
 Fixes found during device testing.

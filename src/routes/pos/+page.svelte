@@ -306,15 +306,27 @@
 	<div class="flex min-h-[60vh] items-center justify-center">
 		<LoadingSpinner size="lg" />
 	</div>
-{:else if !shiftStore.active}
-	<div class="flex min-h-[70vh] items-center justify-center p-4">
-		<EmptyState icon="🕐" title={t('pos.noOpenShift')} subtitle={t('pos.noOpenShiftHint')}>
-			{#snippet action()}
-				<Button size="lg" onclick={() => goto(resolve('/shifts'))}>{t('pos.openShiftCta')}</Button>
-			{/snippet}
-		</EmptyState>
-	</div>
 {:else}
+	<!-- ── Shift context bar (open) / warning banner (none) ──────────────────── -->
+	{#if shiftStore.active}
+		<div class="shift-bar">
+			{t('shifts.number')} #{shiftStore.active.shift_number} ·
+			<span class="tabular-nums">{shiftStore.active.confirmed_orders}</span>
+			{t('pos.ordersShort')} ·
+			<span class="tabular-nums">{formatUsd(shiftStore.active.total_sales_usd)}</span>
+			{t('pos.soldToday')}
+		</div>
+	{:else}
+		<div class="shift-warning" role="alert">
+			<span class="shift-warning-text"
+				>⚠️ {t('pos.noOpenShift')} · {t('pos.salesWontRegister')}</span
+			>
+			<button type="button" class="shift-warning-link" onclick={() => goto(resolve('/shifts'))}>
+				{t('pos.openShiftCta')} →
+			</button>
+		</div>
+	{/if}
+
 	<div class="pos-grid">
 		<!-- ── LEFT: menu ─────────────────────────────────────────────────────── -->
 		<section class="menu-panel flex min-w-0 flex-col gap-3">
@@ -556,6 +568,49 @@
 		font-size: 1.5rem;
 		font-weight: 700;
 		color: var(--color-text-primary);
+	}
+
+	/* Shift context bar (open) — subtle strip just below the TopBar */
+	.shift-bar {
+		padding: 6px 16px;
+		background: var(--color-surface-overlay);
+		color: var(--color-text-secondary);
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		text-align: center;
+	}
+
+	/* No-shift warning banner */
+	.shift-warning {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 10px 16px;
+		background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+		color: var(--color-text-primary);
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+	}
+
+	.shift-warning-text {
+		min-width: 0;
+	}
+
+	.shift-warning-link {
+		flex: 0 0 auto;
+		border: none;
+		background: transparent;
+		color: var(--color-warning);
+		font-family: var(--font-sans);
+		font-weight: 700;
+		font-size: 0.8125rem;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.shift-warning-link:hover {
+		text-decoration: underline;
 	}
 
 	.pos-grid {
