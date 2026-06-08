@@ -1,7 +1,7 @@
 {
 	"name": "bulldog-cbo",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.0.4",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -43,6 +43,7 @@
 		"vitest-browser-svelte": "^2.1.0"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.107.0"
+		"@supabase/supabase-js": "^2.107.0",
+		"uuid": "^14.0.0"
 	}
 }

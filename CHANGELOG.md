@@ -3,6 +3,73 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.4] — 2026-06-08
+
+Fixes found during device testing.
+
+- PWA meta: add the standard `mobile-web-app-capable` alongside the existing
+  `apple-mobile-web-app-capable` in `src/app.html`.
+- Favicon: add a static `static/favicon.svg` (brand red + 🌭) referenced from
+  `app.html`, with a `favicon.ico` fallback; drop the bundled-asset `<link>`
+  from `+layout.svelte` so the static icon wins (no duplicate icon link).
+- Auth store (`auth.svelte.ts`): clear Svelte's `assignment_value_stale`
+  warning — assign `profile` to a local first and use a block-body `.then`,
+  never reading a `$state` property back from its own assignment expression.
+- Responsive nav: move the sidebar / bottom-nav toggle from `md:` (768px) to
+  `lg:` (1024px) so phones and tablets get the bottom nav and only desktops
+  (≥1024px) get the sidebar (`+layout.svelte`, `NavBar.svelte`, `TopBar.svelte`).
+
+## [0.0.3] — 2026-06-08
+
+Build the full application on top of the schema: auth, app shell, and all screens.
+
+- Foundation: add `uuid` (v7 client IDs via `src/lib/utils/id.ts`); full TypeScript
+  types for every table/view/DTO (`src/lib/types/index.ts`); display formatters
+  (`src/lib/utils/format.ts`); and pure, unit-tested domain logic
+  (`src/lib/domain/{money,recipe,stock,cart}.ts`).
+- Data layer (`src/lib/db.ts`): replace the stub with `auth`, `profilesDb`,
+  `menuDb`, `ingredientsDb`, `ordersDb`, `customersDb`, `shiftsDb`, `settingsDb`.
+  Per-table mappers coerce PostgREST `numeric` strings to numbers; all calls throw
+  on error; soft deletes; session/active-shift injection. `ordersDb.confirm()`
+  writes `sale` ledger movements by expanding each item's recipe (no DB trigger
+  does this). Stock and customer/shift stats are always read from the computed
+  views, never stored.
+- Reactive stores (`src/lib/stores/*.svelte.ts`, runes `$state`): `auth`, `shift`,
+  `cart` (in-memory until park/confirm, derived totals), `nav` (role-filtered),
+  `toast`, and `realtime` (one channel → a version-counter bus screens `$effect` on).
+- Component library (`src/lib/components/`): Button, Card, Badge, LoadingSpinner,
+  EmptyState, Modal, BottomSheet, ConfirmDialog, Input, Select, QtyStepper, Toast,
+  StockBar, OrderTypeToggle, PaymentMethodGrid, MenuItemCard, CartLine, OrderCard,
+  KpiCard, plus the shell's NavBar/TopBar. Touch-first (≥48px), CSS-variable
+  tokens only, 150ms transitions.
+- App shell + auth: SPA-only `+layout.ts` (`ssr=false`), a runes `+layout.svelte`
+  that bootstraps auth / active shift / realtime, gates on a full-screen loader,
+  and enforces login + owner-only route redirects; responsive `NavBar` (desktop
+  sidebar / mobile bottom nav + "Más" sheet) and mobile `TopBar`; a centered
+  `/login` screen; and the root redirect (owner → `/dashboard`, worker → `/pos`).
+- Screens: POS (two-panel menu/cart, category pills, out-of-stock override flow,
+  park/confirm/add-to-existing, success overlay), Orders (Abiertas + Historial,
+  cancel, detail), Dashboard (KPIs, hand-rolled SVG sales-by-hour + top-items,
+  low-stock alerts with quick restock, active-shift card), Ingredients (stock +
+  movimientos tabs, restock/adjust/add, ledger feed), Menu (items + recipe editor,
+  recetas tab), Customers (search, detail, order history, credit payment), Shifts
+  (open/close with cash reconciliation, payment breakdown, history), Settings.
+- i18n: expand the es-VE catalog to cover every screen + enum (229 keys); add a
+  catalog test asserting all enum values resolve through `t()`.
+- Tests: add node unit tests for money, recipe expansion, stock, cart, formatters,
+  and UUID v7 (34 tests). `npm run check`, `npm run lint`, `npm run test` are clean.
+- Bootstrap (`scripts/bootstrap.mjs` + `.env.example`): a service-role script that
+  creates the first owner auth user + profile and seeds a realistic catalog (menu,
+  ingredients, recipes, opening-stock ledger, customers). Idempotent; reuses any
+  pre-seeded categories by name. The anon key cannot create users, so this is the
+  intended bootstrap path. Default login: `owner@bulldogcbo.com` / `bulldog123`.
+- Deviations from the spec/CLAUDE.md, by design: `db.ts` uses a `*Db` namespace
+  form (e.g. `menuDb.items.list()`) rather than the illustrative `menuItems.list()`,
+  to allow nested sub-namespaces and avoid clashing with store names. The zero-stock
+  override is recorded on `order_items.override_reason` (the `sale` ledger entry at
+  confirm still drives the ingredient negative), rather than a separate zero-qty
+  `manual_override` ledger row, since that row would need an arbitrary ingredient id.
+
 ## [0.0.2] — 2026-06-07
 
 - Add the full database schema as Supabase migrations (`supabase/migrations/`):
