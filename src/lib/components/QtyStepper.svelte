@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
+
 	let {
 		value = $bindable(0),
 		min = 0,
@@ -32,38 +34,45 @@
 	const atMax = $derived(max !== undefined && value >= max);
 </script>
 
-<div class="stepper inline-flex items-center gap-2">
+<div class="stepper inline-flex items-center">
 	<button type="button" class="stepper-btn" onclick={decrement} disabled={atMin} aria-label="−">
-		−
+		<Icon name="minus" size={16} stroke={2.6} />
 	</button>
 	<span class="stepper-value tabular-nums">{value}</span>
 	<button type="button" class="stepper-btn" onclick={increment} disabled={atMax} aria-label="+">
-		+
+		<Icon name="plus" size={16} stroke={2.6} />
 	</button>
 </div>
 
 <style>
+	.stepper {
+		gap: 2px;
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-line-2);
+		border-radius: 10px;
+		padding: 3px;
+	}
+
 	.stepper-btn {
 		min-width: 44px;
 		min-height: 44px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-surface-overlay);
-		color: var(--color-text-primary);
+		background: transparent;
+		color: var(--color-text);
 		border: none;
-		border-radius: var(--radius-md);
-		font-size: 20px;
+		border-radius: 8px;
 		font-family: var(--font-sans);
 		line-height: 1;
 		cursor: pointer;
 		transition:
-			transform 150ms ease,
+			background 150ms ease,
 			opacity 150ms ease;
 	}
 
-	.stepper-btn:active {
-		transform: scale(0.95);
+	.stepper-btn:hover:not(:disabled) {
+		background: var(--color-surface-3);
 	}
 
 	.stepper-btn:disabled {
@@ -74,9 +83,9 @@
 	.stepper-value {
 		min-width: 2ch;
 		text-align: center;
-		font-family: var(--font-mono);
 		font-size: 18px;
-		color: var(--color-text-primary);
+		font-weight: 700;
+		color: var(--color-text);
 		font-variant-numeric: tabular-nums;
 	}
 </style>

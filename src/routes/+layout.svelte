@@ -1,8 +1,10 @@
 <script lang="ts">
-	import '@fontsource/inter/400.css';
-	import '@fontsource/inter/500.css';
-	import '@fontsource/inter/600.css';
-	import '@fontsource/inter/700.css';
+	import '@fontsource/archivo/400.css';
+	import '@fontsource/archivo/500.css';
+	import '@fontsource/archivo/600.css';
+	import '@fontsource/archivo/700.css';
+	import '@fontsource/archivo/800.css';
+	import '@fontsource/archivo/900.css';
 	import '../app.css';
 	import { buildThemeCss } from '$lib/design/tokens-css';
 
@@ -80,10 +82,12 @@
 {:else}
 	<div class="app-shell">
 		<NavBar />
-		<TopBar />
-		<main class="app-main pt-14 pb-20 lg:pt-0 lg:pb-0 lg:pl-[240px]">
-			{@render children()}
-		</main>
+		<div class="main">
+			<TopBar />
+			<div class="content">
+				{@render children()}
+			</div>
+		</div>
 	</div>
 	<Toast />
 {/if}
@@ -94,17 +98,37 @@
 		align-items: center;
 		justify-content: center;
 		min-height: 100vh;
-		background: var(--color-surface-base);
+		background: var(--color-bg);
 	}
 
 	.app-shell {
-		min-height: 100vh;
-		background: var(--color-surface-base);
+		background: var(--color-bg);
 	}
 
-	.app-main {
-		min-height: 100vh;
-		color: var(--color-text-primary);
+	.main {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		height: 100vh;
+	}
+
+	.content {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		color: var(--color-text);
 		font-family: var(--font-sans);
+	}
+
+	@media (min-width: 1024px) {
+		.main {
+			margin-left: 250px;
+		}
+	}
+
+	@media (max-width: 1023px) {
+		.content {
+			padding-bottom: 70px;
+		}
 	}
 </style>

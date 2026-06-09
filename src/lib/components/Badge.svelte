@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	const {
 		variant = 'neutral',
+		icon,
 		children
 	}: {
 		variant?: 'success' | 'danger' | 'warning' | 'info' | 'secondary' | 'accent' | 'neutral';
+		icon?: string;
 		children: Snippet;
 	} = $props();
 </script>
@@ -20,6 +23,7 @@
 	class:v-accent={variant === 'accent'}
 	class:v-neutral={variant === 'neutral'}
 >
+	{#if icon}<Icon name={icon} size={12} stroke={2.4} />{/if}
 	{@render children()}
 </span>
 
@@ -28,47 +32,50 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		gap: 5px;
 		border-radius: var(--radius-full);
-		padding: 2px 10px;
+		padding: 4px 9px;
 		font-family: var(--font-sans);
-		font-size: 12px;
-		font-weight: 600;
-		line-height: 1.4;
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 1;
 		white-space: nowrap;
 	}
 
-	.v-success {
-		background-color: var(--color-success);
-		color: var(--color-success-fg);
-	}
-
-	.v-danger {
-		background-color: var(--color-danger);
-		color: var(--color-danger-fg);
-	}
-
-	.v-warning {
-		background-color: var(--color-warning);
-		color: var(--color-warning-fg);
-	}
-
-	.v-info {
-		background-color: var(--color-info);
-		color: var(--color-info-fg);
-	}
-
-	.v-secondary {
-		background-color: var(--color-secondary);
-		color: var(--color-secondary-fg);
-	}
-
+	/* Hero — solid mustard */
 	.v-accent {
-		background-color: var(--color-accent);
+		background-color: var(--color-mustard);
 		color: var(--color-accent-fg);
 	}
 
+	/* Soft mustard tint */
+	.v-secondary {
+		background-color: var(--color-mustard-soft);
+		color: var(--color-mustard);
+	}
+
+	.v-success {
+		background-color: color-mix(in srgb, var(--color-green) 16%, transparent);
+		color: var(--color-green);
+	}
+
+	.v-danger {
+		background-color: color-mix(in srgb, var(--color-red) 16%, transparent);
+		color: var(--color-red);
+	}
+
+	.v-warning {
+		background-color: color-mix(in srgb, var(--color-amber) 16%, transparent);
+		color: var(--color-amber);
+	}
+
+	.v-info {
+		background-color: color-mix(in srgb, var(--color-info) 16%, transparent);
+		color: var(--color-info);
+	}
+
 	.v-neutral {
-		background-color: var(--color-surface-overlay);
-		color: var(--color-text-secondary);
+		background-color: var(--color-surface-2);
+		color: var(--color-text-dim);
 	}
 </style>

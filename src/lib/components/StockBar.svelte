@@ -3,7 +3,12 @@
 	import { formatQty } from '$lib/utils/format';
 	import type { Unit } from '$lib/types';
 
-	const { current, min, unit }: { current: number; min: number; unit?: Unit } = $props();
+	const {
+		current,
+		min,
+		unit,
+		showValue = true
+	}: { current: number; min: number; unit?: Unit; showValue?: boolean } = $props();
 
 	const level = $derived(stockLevel(current, min));
 	const ratio = $derived(stockRatio(current, min));
@@ -13,7 +18,9 @@
 	<div class="track">
 		<div class="fill {level}" style:width="{ratio * 100}%"></div>
 	</div>
-	<span class="value tabular-nums">{formatQty(current, unit)}</span>
+	{#if showValue}
+		<span class="value tabular-nums">{formatQty(current, unit)}</span>
+	{/if}
 </div>
 
 <style>
@@ -27,8 +34,8 @@
 	.track {
 		flex: 1;
 		min-width: 0;
-		height: 8px;
-		background: var(--color-surface-overlay);
+		height: 10px;
+		background: var(--color-surface-3);
 		border-radius: var(--radius-full);
 		overflow: hidden;
 	}
@@ -36,23 +43,24 @@
 	.fill {
 		height: 100%;
 		border-radius: var(--radius-full);
-		transition: width 150ms ease;
+		transition: width 0.3s ease;
 	}
 
 	.fill.out {
-		background: var(--color-danger);
+		background: var(--color-red);
 	}
 	.fill.low {
-		background: var(--color-warning);
+		background: var(--color-amber);
 	}
 	.fill.ok {
-		background: var(--color-success);
+		background: var(--color-green);
 	}
 
 	.value {
 		flex-shrink: 0;
-		font-family: var(--font-mono);
+		font-weight: 700;
 		font-size: 0.875rem;
-		color: var(--color-text-secondary);
+		color: var(--color-text-dim);
+		font-variant-numeric: tabular-nums;
 	}
 </style>

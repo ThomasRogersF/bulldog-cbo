@@ -27,26 +27,18 @@
 
 <style>
 	.card {
-		background-color: var(--color-surface-raised);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-surface);
+		border: 1px solid var(--color-line);
+		border-radius: var(--r-card);
 	}
 
-	.elevation-1 {
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.1),
-			0 1px 2px rgba(0, 0, 0, 0.06);
-	}
-
+	/* Flat by default on dark; raised levels use dark-readable shadows. */
 	.elevation-2 {
-		box-shadow:
-			0 4px 6px rgba(0, 0, 0, 0.1),
-			0 2px 4px rgba(0, 0, 0, 0.06);
+		box-shadow: 0 14px 26px -16px rgba(0, 0, 0, 0.8);
 	}
 
 	.elevation-3 {
-		box-shadow:
-			0 10px 20px rgba(0, 0, 0, 0.12),
-			0 4px 8px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
 	}
 
 	.pad-none {
@@ -54,11 +46,11 @@
 	}
 
 	.pad-sm {
-		padding: 8px;
+		padding: 12px;
 	}
 
 	.pad-md {
-		padding: 16px;
+		padding: 20px;
 	}
 
 	.pad-lg {

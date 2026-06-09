@@ -16,6 +16,7 @@
 	import Input from '$lib/components/Input.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	const PAYMENT_METHODS: PaymentMethod[] = [
 		'cash_usd',
@@ -225,8 +226,6 @@
 </script>
 
 <div class="page mx-auto w-full max-w-2xl px-4 py-6 flex flex-col gap-6">
-	<h1 class="page-title">{t('shifts.title')}</h1>
-
 	{#if shiftStore.loading && !shiftStore.active}
 		<div class="flex justify-center py-12">
 			<LoadingSpinner size="lg" />
@@ -235,8 +234,8 @@
 		<!-- No active shift → open prompt -->
 		<Card padding="lg">
 			<div class="flex flex-col items-center text-center gap-1">
-				<span class="prompt-icon" aria-hidden="true">🌭</span>
-				<h2 class="greeting">{t(greetingKey())} 👋</h2>
+				<img class="prompt-icon" src="/bulldog-logo.png" alt="" aria-hidden="true" />
+				<h2 class="greeting">{t(greetingKey())}</h2>
 				{#if authStore.profile}
 					<p class="greeting-name">{authStore.profile.full_name}</p>
 				{/if}
@@ -413,14 +412,19 @@
 						</p>
 
 						{#if varianceKind === 'none'}
-							<p class="variance-line good">✅ {t('shifts.noDifference')}</p>
+							<p class="variance-line good">
+								<Icon name="checkcircle" size={15} />
+								{t('shifts.noDifference')}
+							</p>
 						{:else if varianceKind === 'surplus'}
 							<p class="variance-line good">
-								⬆️ {t('shifts.surplus')}: +{formatUsd(varianceAmount)}
+								<Icon name="arrowUp" size={15} stroke={2.4} />
+								{t('shifts.surplus')}: +{formatUsd(varianceAmount)}
 							</p>
 						{:else if varianceKind === 'shortage'}
 							<p class="variance-line bad">
-								⬇️ {t('shifts.shortage')}: -{formatUsd(-varianceAmount)}
+								<Icon name="arrowDown" size={15} stroke={2.4} />
+								{t('shifts.shortage')}: -{formatUsd(-varianceAmount)}
 							</p>
 						{/if}
 					</div>
@@ -457,7 +461,7 @@
 			</div>
 		{:else if closedHistory.length === 0}
 			<Card padding="lg">
-				<EmptyState icon="📋" title={t('shifts.noHistory')} />
+				<EmptyState icon="clock" title={t('shifts.noHistory')} />
 			</Card>
 		{:else}
 			<div class="flex flex-col gap-3">
@@ -498,16 +502,11 @@
 </div>
 
 <style>
-	.page-title {
-		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
-	}
-
 	.prompt-icon {
-		font-size: 56px;
-		line-height: 1;
+		width: 64px;
+		height: auto;
+		border-radius: 16px;
+		margin-bottom: 4px;
 	}
 
 	.greeting {
@@ -739,6 +738,9 @@
 	}
 
 	.variance-line {
+		display: flex;
+		align-items: center;
+		gap: 6px;
 		font-family: var(--font-sans);
 		font-size: 0.9375rem;
 		font-weight: 600;

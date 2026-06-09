@@ -3,6 +3,39 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [unreleased] — 2026-06-08
+
+Bulldog CBO brand design system — a visual-only redesign (no business-logic,
+data, or behavior changes) implementing the Claude Design reference bundle.
+
+- **Theme:** black canvas with **mustard (`#FDCD01`) as the sole hero accent**.
+  Dark is now the default (applied pre-paint via an inline script in `app.html`,
+  no flash); the Settings light/dark toggle still works and persists. `tokens.ts`
+  carries both palettes plus legacy aliases so every `var(--color-*)` resolves in
+  either theme; `tokens-css.ts` emits dark into `:root` and light into
+  `[data-theme="light"]`, with `--r-card/--r-btn/--r-tile` radii.
+- **Typography:** swapped Inter → **Archivo** (`@fontsource/archivo`, weights
+  400–900); `--font-mono` now points at Archivo for tabular figures.
+- **Icons:** ported a custom line-SVG set — new `Icon.svelte` (46 icons) and
+  `FoodGlyph.svelte` (7 food glyphs) — replacing every emoji across the sidebar,
+  mobile nav, POS tiles/CTAs, KPI cards, payment grid, order-type toggle, cart
+  lines, empty states, settings sections, shift variance, toasts and brand marks.
+- **Shell:** new 250px sidebar (logo tile, mustard active nav with dot, green
+  pulse shift chip, mustard avatar), a persistent 70px TopBar (page title/subtitle
+  from a route map, exchange-rate chip, shift badge, mobile hamburger), and a 66px
+  mobile bottom nav. Per-screen page headers removed (the TopBar shows the title).
+- **Components restyled (APIs preserved):** Button, Badge (variants remapped to
+  the new tones), Card, Input, Select (added chevron), StockBar (added
+  `showValue`), Toast, KpiCard, PaymentMethodGrid, OrderTypeToggle, CartLine,
+  MenuItemCard (dropped category accent bar; added `qtyInCart`/`bsText` and
+  FoodGlyph art), QtyStepper, Modal, EmptyState.
+- **Screens:** Dashboard (KPI row, mustard bar chart with peak glow, Top-5,
+  active-shift card, low-stock grid), POS (two-panel catalog + cart, search,
+  27px mustard total, sticky confirm), Ingredients (segmented control, ingredient
+  cards, movements list), Login (dark card + logo). Orders/Menu/Customers/Shifts/
+  Settings inherit the system with a coherence pass (tabs, toggle switches, FABs).
+- Off-palette category-color defaults in `db.ts` repointed to the new palette.
+
 ## [0.0.5] — 2026-06-08
 
 Shift open/close UX overhaul + POS shift context.

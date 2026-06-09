@@ -15,6 +15,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import OrderCard from '$lib/components/OrderCard.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	// ── List state ────────────────────────────────────────────────────────────
 	let customers = $state<CustomerStats[]>([]);
@@ -222,13 +223,10 @@
 	}
 </script>
 
-<div class="page mx-auto w-full max-w-3xl px-4 py-4 flex flex-col gap-4">
-	<!-- Header -->
-	<div class="flex items-center justify-between gap-3">
-		<h1 class="title">{t('customers.title')}</h1>
-		<div class="hidden md:block">
-			<Button onclick={openAdd}>{t('customers.add')}</Button>
-		</div>
+<div class="page mx-auto w-full max-w-3xl px-4 py-6 flex flex-col gap-4">
+	<!-- Header action (title shown in the TopBar) -->
+	<div class="hidden md:flex justify-end">
+		<Button icon="plus" onclick={openAdd}>{t('customers.add')}</Button>
 	</div>
 
 	<!-- Search -->
@@ -254,9 +252,9 @@
 		</div>
 	{:else if customers.length === 0}
 		{#if query.trim()}
-			<EmptyState icon="🔎" title={t('customers.noResults')} />
+			<EmptyState icon="search" title={t('customers.noResults')} />
 		{:else}
-			<EmptyState icon="👥" title={t('customers.noCustomers')}>
+			<EmptyState icon="users" title={t('customers.noCustomers')}>
 				{#snippet action()}
 					<Button onclick={openAdd}>{t('customers.add')}</Button>
 				{/snippet}
@@ -313,7 +311,7 @@
 
 <!-- Floating add button (mobile) -->
 <button type="button" class="fab md:hidden" aria-label={t('customers.add')} onclick={openAdd}>
-	+
+	<Icon name="plus" size={24} stroke={2.6} />
 </button>
 
 <!-- ── Detail slide-over ─────────────────────────────────────────────────────── -->
@@ -457,13 +455,6 @@
 </Modal>
 
 <style>
-	.title {
-		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
-	}
-
 	.card-btn {
 		display: block;
 		border-radius: var(--radius-lg);
@@ -516,27 +507,21 @@
 		bottom: 80px;
 		width: 56px;
 		height: 56px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.75rem;
-		line-height: 1;
+		display: grid;
+		place-items: center;
 		border: none;
 		border-radius: var(--radius-full);
-		background: var(--color-accent);
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
-		font-family: var(--font-sans);
 		cursor: pointer;
-		box-shadow:
-			0 10px 20px rgba(0, 0, 0, 0.12),
-			0 4px 8px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 12px 26px -8px color-mix(in srgb, var(--color-mustard) 70%, transparent);
 		transition:
-			background 150ms ease,
+			filter 150ms ease,
 			transform 150ms ease;
 		z-index: 30;
 	}
 	.fab:hover {
-		background: var(--color-accent-hover);
+		filter: brightness(1.06);
 	}
 	.fab:active {
 		transform: scale(0.92);

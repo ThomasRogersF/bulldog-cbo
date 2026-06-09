@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
+
 	let {
 		label,
 		value = $bindable(''),
@@ -20,20 +22,23 @@
 	{#if label}
 		<span class="field-label">{label}</span>
 	{/if}
-	<select
-		{disabled}
-		bind:value
-		class="field-select w-full"
-		class:has-error={!!error}
-		aria-invalid={error ? 'true' : undefined}
-	>
-		{#if placeholder}
-			<option value="" disabled>{placeholder}</option>
-		{/if}
-		{#each options as option (option.value)}
-			<option value={option.value}>{option.label}</option>
-		{/each}
-	</select>
+	<span class="select-wrap">
+		<select
+			{disabled}
+			bind:value
+			class="field-select w-full"
+			class:has-error={!!error}
+			aria-invalid={error ? 'true' : undefined}
+		>
+			{#if placeholder}
+				<option value="" disabled>{placeholder}</option>
+			{/if}
+			{#each options as option (option.value)}
+				<option value={option.value}>{option.label}</option>
+			{/each}
+		</select>
+		<span class="select-chevron" aria-hidden="true"><Icon name="chevronDown" size={16} /></span>
+	</span>
 	{#if error}
 		<span class="field-error">{error}</span>
 	{/if}
@@ -41,32 +46,51 @@
 
 <style>
 	.field-label {
-		font-size: 13px;
-		font-weight: 600;
-		color: var(--color-text-secondary);
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--color-text-dim);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
 		font-family: var(--font-sans);
+	}
+
+	.select-wrap {
+		position: relative;
+		display: block;
+		width: 100%;
+	}
+
+	.select-chevron {
+		position: absolute;
+		top: 50%;
+		right: 12px;
+		transform: translateY(-50%);
+		display: grid;
+		place-items: center;
+		color: var(--color-text-dim);
+		pointer-events: none;
 	}
 
 	.field-select {
 		min-height: 48px;
-		padding: 12px;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
-		color: var(--color-text-primary);
+		padding: 12px 38px 12px 14px;
+		border: 1px solid var(--color-line-2);
+		border-radius: 11px;
+		background: var(--color-surface-2);
+		color: var(--color-text);
 		font-family: var(--font-sans);
-		font-size: 16px;
+		font-size: 15px;
 		transition: border-color 150ms ease;
 		appearance: none;
 	}
 
 	.field-select:focus {
 		outline: none;
-		border-color: var(--color-accent);
+		border-color: var(--color-mustard);
 	}
 
 	.field-select.has-error {
-		border-color: var(--color-danger);
+		border-color: var(--color-red);
 	}
 
 	.field-select:disabled {
@@ -76,7 +100,7 @@
 
 	.field-error {
 		font-size: 12px;
-		color: var(--color-danger);
+		color: var(--color-red);
 		font-family: var(--font-sans);
 	}
 </style>

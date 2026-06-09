@@ -7,6 +7,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	type AlertKey = 'low_stock_alerts' | 'shift_alerts' | 'large_sale_alerts' | 'override_alerts';
 
@@ -56,8 +57,9 @@
 	});
 
 	$effect(() => {
+		// Dark is the default; only an explicit 'light' preference opts out.
 		const stored = localStorage.getItem('theme');
-		const dark = stored === 'dark';
+		const dark = stored !== 'light';
 		isDark = dark;
 		document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 	});
@@ -191,8 +193,6 @@
 </script>
 
 <div class="page mx-auto w-full max-w-3xl px-4 py-6">
-	<h1 class="page-title">{t('settings.title')}</h1>
-
 	{#if loading}
 		<div class="flex justify-center py-16">
 			<LoadingSpinner size="lg" />
@@ -203,7 +203,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">💱</span>
+						<span class="section-icon"><Icon name="swap" size={18} /></span>
 						<h2 class="section-title">{t('settings.exchangeRate')}</h2>
 					</header>
 					{#if usdRateUpdatedAt}
@@ -229,7 +229,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">📨</span>
+						<span class="section-icon"><Icon name="bell" size={18} /></span>
 						<h2 class="section-title">{t('settings.telegram')}</h2>
 					</header>
 
@@ -263,7 +263,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">🔔</span>
+						<span class="section-icon"><Icon name="bell" size={18} /></span>
 						<h2 class="section-title">{t('settings.alerts')}</h2>
 					</header>
 					<ul class="flex flex-col">
@@ -291,7 +291,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">💵</span>
+						<span class="section-icon"><Icon name="cash" size={18} /></span>
 						<h2 class="section-title">{t('settings.largeSaleThreshold')}</h2>
 					</header>
 					<Input type="number" inputmode="decimal" bind:value={largeSaleThreshold} />
@@ -307,7 +307,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">🏪</span>
+						<span class="section-icon"><Icon name="pin" size={18} /></span>
 						<h2 class="section-title">{t('settings.business')}</h2>
 					</header>
 
@@ -350,7 +350,7 @@
 			<Card>
 				<div class="flex flex-col gap-4">
 					<header class="section-header">
-						<span class="section-emoji" aria-hidden="true">🎨</span>
+						<span class="section-icon"><Icon name="sparkle" size={18} /></span>
 						<h2 class="section-title">{t('settings.theme')}</h2>
 					</header>
 					<div class="toggle-row">
@@ -376,36 +376,29 @@
 </div>
 
 <style>
-	.page-title {
-		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
-		margin-bottom: 1rem;
-	}
-
 	.section-header {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 10px;
 	}
 
-	.section-emoji {
-		font-size: 1.25rem;
-		line-height: 1;
+	.section-icon {
+		display: grid;
+		place-items: center;
+		color: var(--color-mustard);
 	}
 
 	.section-title {
 		font-family: var(--font-sans);
 		font-size: 1.125rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+		font-weight: 800;
+		color: var(--color-text);
 	}
 
 	.section-meta {
 		font-family: var(--font-sans);
 		font-size: 0.8125rem;
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 	}
 
 	.toggle-row {
@@ -419,7 +412,7 @@
 	.toggle-label {
 		font-family: var(--font-sans);
 		font-size: 1rem;
-		color: var(--color-text-primary);
+		color: var(--color-text);
 	}
 
 	.switch {
@@ -430,7 +423,7 @@
 		padding: 3px;
 		border: none;
 		border-radius: var(--radius-full);
-		background-color: var(--color-surface-overlay);
+		background-color: var(--color-surface-3);
 		cursor: pointer;
 		transition: background-color 150ms ease;
 	}
@@ -440,7 +433,7 @@
 	}
 
 	.switch-on {
-		background-color: var(--color-accent);
+		background-color: var(--color-mustard);
 	}
 
 	.switch-thumb {
@@ -448,14 +441,13 @@
 		width: 24px;
 		height: 24px;
 		border-radius: var(--radius-full);
-		background-color: var(--color-surface-raised);
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.1),
-			0 1px 2px rgba(0, 0, 0, 0.06);
+		background-color: var(--color-text);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 		transition: transform 150ms ease;
 	}
 
 	.switch-on .switch-thumb {
 		transform: translateX(22px);
+		background-color: var(--color-accent-fg);
 	}
 </style>

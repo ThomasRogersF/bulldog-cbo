@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
 	import type { OrderType } from '$lib/types';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let { value = $bindable('takeout') }: { value?: OrderType } = $props();
 </script>
@@ -13,7 +14,7 @@
 		aria-pressed={value === 'dine_in'}
 		onclick={() => (value = 'dine_in')}
 	>
-		<span aria-hidden="true">🍽️</span>
+		<Icon name="utensils" size={18} />
 		<span>{t('orderType.dine_in')}</span>
 	</button>
 	<button
@@ -23,51 +24,49 @@
 		aria-pressed={value === 'takeout'}
 		onclick={() => (value = 'takeout')}
 	>
-		<span aria-hidden="true">🥡</span>
+		<Icon name="bag" size={18} />
 		<span>{t('orderType.takeout')}</span>
 	</button>
 </div>
 
 <style>
 	.toggle {
-		display: flex;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		width: 100%;
-		min-height: 48px;
-		padding: 3px;
-		gap: 3px;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
+		padding: 5px;
+		gap: 6px;
+		border: 1px solid var(--color-line);
+		border-radius: 13px;
+		background: var(--color-surface-2);
 	}
 
 	.seg {
-		flex: 1;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.4rem;
-		min-height: 42px;
-		padding: 0.5rem 0.75rem;
+		gap: 8px;
+		min-height: 48px;
+		padding: 12px;
 		border: none;
-		border-radius: var(--radius-sm);
+		border-radius: 9px;
 		background: transparent;
-		color: var(--color-text-secondary);
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
-		font-size: 0.9375rem;
-		font-weight: 600;
+		font-size: 14px;
+		font-weight: 700;
 		cursor: pointer;
 		transition:
 			background 150ms ease,
-			color 150ms ease,
-			transform 150ms ease;
+			color 150ms ease;
 	}
 
-	.seg:active {
-		transform: scale(0.97);
+	.seg:hover {
+		color: var(--color-text);
 	}
 
 	.seg.selected {
-		background: var(--color-accent);
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
 	}
 </style>

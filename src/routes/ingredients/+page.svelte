@@ -21,6 +21,14 @@
 	import StockBar from '$lib/components/StockBar.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
+
+	// 'low' = critical/out (red), 'mid' = low (amber), 'ok' = healthy (green)
+	function levelOf(it: IngredientStock): 'low' | 'mid' | 'ok' {
+		if (it.is_out_of_stock) return 'low';
+		if (it.is_low_stock) return 'mid';
+		return 'ok';
+	}
 
 	type Tab = 'stock' | 'movements';
 	let tab = $state<Tab>('stock');
@@ -34,6 +42,8 @@
 	const filteredItems = $derived(
 		activeCategory === 'all' ? items : items.filter((it) => it.category_id === activeCategory)
 	);
+
+	const lowCount = $derived(items.filter((it) => it.is_out_of_stock).length);
 
 	async function loadStock() {
 		stockLoading = true;
@@ -241,42 +251,49 @@
 	}
 </script>
 
-<div class="page flex flex-col gap-4 p-4 pb-24">
-	<header class="flex items-center justify-between gap-3">
-		<h1 class="title">{t('ingredients.title')}</h1>
-	</header>
-
-	<!-- Tabs -->
-	<div class="tabs flex gap-1 p-1" role="tablist">
-		<button
-			type="button"
-			role="tab"
-			aria-selected={tab === 'stock'}
-			class="tab flex-1"
-			class:active={tab === 'stock'}
-			onclick={() => (tab = 'stock')}
-		>
-			{t('ingredients.tabStock')}
-		</button>
-		<button
-			type="button"
-			role="tab"
-			aria-selected={tab === 'movements'}
-			class="tab flex-1"
-			class:active={tab === 'movements'}
-			onclick={() => (tab = 'movements')}
-		>
-			{t('ingredients.tabMovements')}
-		</button>
+<div class="page">
+	<!-- Segmented control + alert -->
+	<div class="ing-top">
+		<div class="segmented" role="tablist">
+			<button
+				type="button"
+				role="tab"
+				aria-selected={tab === 'stock'}
+				class="seg"
+				class:seg--on={tab === 'stock'}
+				onclick={() => (tab = 'stock')}
+			>
+				<Icon name="box" size={17} />
+				{t('ingredients.tabStock')}
+			</button>
+			<button
+				type="button"
+				role="tab"
+				aria-selected={tab === 'movements'}
+				class="seg"
+				class:seg--on={tab === 'movements'}
+				onclick={() => (tab = 'movements')}
+			>
+				<Icon name="swap" size={17} />
+				{t('ingredients.tabMovements')}
+			</button>
+		</div>
+		{#if tab === 'stock' && lowCount > 0}
+			<div class="ing-alert">
+				<Icon name="alert" size={16} />
+				<b>{lowCount}</b>
+				{t('ingredients.outOfStock')}
+			</div>
+		{/if}
 	</div>
 
 	{#if tab === 'stock'}
 		<!-- Category filter pills -->
-		<div class="pills flex gap-2 overflow-x-auto pb-1">
+		<div class="tabs">
 			<button
 				type="button"
 				class="pill"
-				class:active={activeCategory === 'all'}
+				class:pill--on={activeCategory === 'all'}
 				onclick={() => (activeCategory = 'all')}
 			>
 				{t('common.all')}
@@ -285,7 +302,7 @@
 				<button
 					type="button"
 					class="pill"
-					class:active={activeCategory === cat.id}
+					class:pill--on={activeCategory === cat.id}
 					onclick={() => (activeCategory = cat.id)}
 				>
 					{cat.name}
@@ -298,41 +315,69 @@
 				<LoadingSpinner size="lg" />
 			</div>
 		{:else if filteredItems.length === 0}
-			<EmptyState icon="🧺" title={t('ingredients.noIngredients')} />
+			<EmptyState icon="box" title={t('ingredients.noIngredients')} />
 		{:else}
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+			<div class="inggrid">
 				{#each filteredItems as item (item.id)}
-					<Card>
-						<div class="flex flex-col gap-3">
-							<div class="flex items-start justify-between gap-2">
-								<div class="flex flex-col gap-1 min-w-0">
-									<span class="item-name">{item.name}</span>
-									<div class="flex items-center gap-2 flex-wrap">
-										<Badge variant="neutral">{t('units.' + item.unit)}</Badge>
-										{#if item.is_out_of_stock}
-											<Badge variant="danger">{t('ingredients.outOfStock')}</Badge>
-										{:else if item.is_low_stock}
-											<Badge variant="warning">{t('ingredients.lowStock')}</Badge>
-										{/if}
-									</div>
+					{@const level = levelOf(item)}
+					<div class="ing ing--{level}">
+						<div class="ing__head">
+							<div class="ing__id">
+								<h4 class="ing__name">{item.name}</h4>
+								<div class="ing__tags">
+									<span class="chip chip--unit">{t('units.' + item.unit)}</span>
 								</div>
-								<span class="current-stock tabular-nums">
-									{formatQty(item.current_stock, item.unit)}
-								</span>
 							</div>
-
-							<StockBar current={item.current_stock} min={item.min_stock} unit={item.unit} />
-
-							<div class="grid grid-cols-2 gap-2">
-								<Button variant="primary" size="sm" full onclick={() => openRestock(item)}>
-									+ {t('ingredients.restock')}
-								</Button>
-								<Button variant="secondary" size="sm" full onclick={() => openAdjust(item)}>
-									{t('ingredients.adjust')}
-								</Button>
+							<div class="ing__qty tabular-nums">
+								{formatQty(item.current_stock)}<span>{t('units.' + item.unit)}</span>
 							</div>
 						</div>
-					</Card>
+
+						<div class="ing__barwrap">
+							<StockBar
+								current={item.current_stock}
+								min={item.min_stock}
+								unit={item.unit}
+								showValue={false}
+							/>
+							<div class="ing__meta">
+								<span class="ing__pct"
+									>{t('ingredients.minStock')}:
+									<b class="tabular-nums">{formatQty(item.min_stock, item.unit)}</b></span
+								>
+								<Badge
+									variant={level === 'low' ? 'danger' : level === 'mid' ? 'warning' : 'success'}
+								>
+									{level === 'low'
+										? t('ingredients.outOfStock')
+										: level === 'mid'
+											? t('ingredients.lowStock')
+											: t('status.confirmed')}
+								</Badge>
+							</div>
+						</div>
+
+						<div class="ing__btns">
+							<Button
+								variant="primary"
+								size="sm"
+								icon="refill"
+								full
+								onclick={() => openRestock(item)}
+							>
+								{t('ingredients.restock')}
+							</Button>
+							<Button
+								variant="secondary"
+								size="sm"
+								icon="edit"
+								full
+								onclick={() => openAdjust(item)}
+							>
+								{t('ingredients.adjust')}
+							</Button>
+						</div>
+					</div>
 				{/each}
 			</div>
 		{/if}
@@ -360,38 +405,35 @@
 				<LoadingSpinner size="lg" />
 			</div>
 		{:else if filteredMovements.length === 0}
-			<EmptyState icon="📋" title={t('ingredients.noMovements')} />
+			<EmptyState icon="receipt" title={t('ingredients.noMovements')} />
 		{:else}
-			<div class="flex flex-col gap-2">
-				{#each filteredMovements as mv (mv.id)}
-					<Card padding="sm">
-						<div class="flex items-start justify-between gap-3">
-							<div class="flex flex-col gap-1 min-w-0">
-								<span class="mv-name">{mv.ingredient_name ?? '—'}</span>
-								<div class="flex items-center gap-2 flex-wrap">
+			<Card>
+				<div class="moves__list">
+					{#each filteredMovements as mv (mv.id)}
+						{@const dir = mv.qty_change >= 0 ? 'in' : 'out'}
+						<div class="move">
+							<span class="move__ic move__ic--{dir}">
+								<Icon name={dir === 'in' ? 'arrowDown' : 'arrowUp'} size={15} stroke={2.6} />
+							</span>
+							<div class="move__info">
+								<div class="move__top">
+									<span class="move__name">{mv.ingredient_name ?? '—'}</span>
 									<Badge variant={reasonVariant(mv.reason)}>
 										{t('ingredientReason.' + mv.reason)}
 									</Badge>
-									{#if mv.actor_name}
-										<span class="mv-meta">{mv.actor_name}</span>
-									{/if}
 								</div>
-								{#if mv.note}
-									<span class="mv-note">{mv.note}</span>
-								{/if}
-								<span class="mv-meta">{formatDateTime(mv.created_at)}</span>
+								<span class="move__who">
+									{mv.actor_name ? mv.actor_name + ' · ' : ''}{formatDateTime(mv.created_at)}
+								</span>
+								{#if mv.note}<span class="move__note">{mv.note}</span>{/if}
 							</div>
-							<span
-								class="mv-qty tabular-nums"
-								class:pos={mv.qty_change > 0}
-								class:neg={mv.qty_change < 0}
-							>
+							<span class="move__delta move__delta--{dir}">
 								{mv.qty_change > 0 ? '+' : ''}{formatQty(mv.qty_change, mv.ingredient_unit)}
 							</span>
 						</div>
-					</Card>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			</Card>
 		{/if}
 	{/if}
 </div>
@@ -399,7 +441,7 @@
 <!-- FAB: add ingredient (stock tab only) -->
 {#if tab === 'stock'}
 	<button type="button" class="fab" aria-label={t('ingredients.add')} onclick={openAdd}>
-		<span aria-hidden="true">+</span>
+		<Icon name="plus" size={24} stroke={2.6} />
 	</button>
 {/if}
 
@@ -515,187 +557,327 @@
 </Modal>
 
 <style>
-	.title {
+	.page {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 24px 26px 90px;
 		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
 	}
 
-	.tabs {
-		background: var(--color-surface-overlay);
-		border-radius: var(--radius-lg);
+	.ing-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		flex-wrap: wrap;
 	}
 
-	.tab {
-		min-height: 48px;
-		padding: 0 16px;
+	/* Segmented control */
+	.segmented {
+		display: inline-flex;
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-line);
+		border-radius: 12px;
+		padding: 5px;
+		gap: 4px;
+	}
+	.seg {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 11px 26px;
 		border: none;
 		background: transparent;
-		border-radius: var(--radius-md);
+		border-radius: 9px;
 		font-family: var(--font-sans);
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--color-text-secondary);
+		font-weight: 700;
+		font-size: 14px;
+		color: var(--color-text-dim);
 		cursor: pointer;
 		transition:
 			background 150ms ease,
 			color 150ms ease;
 	}
-
-	.tab.active {
-		background: var(--color-surface-raised);
-		color: var(--color-text-primary);
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.1),
-			0 1px 2px rgba(0, 0, 0, 0.06);
+	.seg:hover {
+		color: var(--color-text);
+	}
+	.seg--on {
+		background: var(--color-mustard);
+		color: var(--color-accent-fg);
 	}
 
-	.pill {
-		flex-shrink: 0;
-		min-height: 48px;
-		padding: 0 16px;
-		border: 1px solid var(--color-surface-overlay);
-		background: var(--color-surface-raised);
-		border-radius: var(--radius-full);
-		font-family: var(--font-sans);
-		font-size: 0.875rem;
+	.ing-alert {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 13px;
 		font-weight: 600;
-		color: var(--color-text-secondary);
+		color: var(--color-red);
+		background: color-mix(in srgb, var(--color-red) 10%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-red) 22%, transparent);
+		padding: 10px 14px;
+		border-radius: 11px;
+	}
+	.ing-alert b {
+		font-weight: 800;
+	}
+
+	/* Category pills */
+	.tabs {
+		display: flex;
+		gap: 9px;
+		flex-wrap: wrap;
+	}
+	.pill {
+		display: inline-flex;
+		align-items: center;
+		min-height: 48px;
+		padding: 9px 16px;
+		border: 1px solid var(--color-line);
+		background: var(--color-surface-2);
+		border-radius: 9999px;
+		font-family: var(--font-sans);
+		font-size: 13.5px;
+		font-weight: 700;
+		color: var(--color-text-dim);
 		white-space: nowrap;
 		cursor: pointer;
 		transition:
 			background 150ms ease,
 			color 150ms ease,
-			border-color 150ms ease,
-			transform 150ms ease;
+			border-color 150ms ease;
 	}
-
-	.pill:active {
-		transform: scale(0.96);
+	.pill:hover {
+		color: var(--color-text);
+		border-color: var(--color-line-2);
 	}
-
-	.pill.active {
-		background: var(--color-accent);
+	.pill--on {
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
-		border-color: var(--color-accent);
+		border-color: var(--color-mustard);
 	}
 
-	.item-name {
-		font-family: var(--font-sans);
-		font-size: 1.0625rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
-		overflow: hidden;
-		text-overflow: ellipsis;
+	/* Ingredient cards */
+	.inggrid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 14px;
+	}
+	.ing {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-line);
+		border-radius: var(--r-card);
+		padding: 20px;
+	}
+	.ing--low {
+		border-color: color-mix(in srgb, var(--color-red) 28%, transparent);
+	}
+	.ing--mid {
+		border-color: color-mix(in srgb, var(--color-amber) 26%, transparent);
+	}
+	.ing__head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	.ing__name {
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--color-text);
+	}
+	.ing__tags {
+		display: flex;
+		gap: 6px;
+		margin-top: 8px;
+	}
+	.chip {
+		font-size: 10.5px;
+		font-weight: 600;
+		color: var(--color-text-dim);
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-line);
+		padding: 3px 9px;
+		border-radius: 7px;
+	}
+	.chip--unit {
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+	.ing__qty {
+		font-size: 26px;
+		font-weight: 800;
+		color: var(--color-text);
 		white-space: nowrap;
 	}
-
-	.current-stock {
-		flex-shrink: 0;
-		font-family: var(--font-mono);
-		font-size: 1.375rem;
+	.ing__qty span {
+		font-size: 14px;
+		color: var(--color-text-dim);
 		font-weight: 700;
-		color: var(--color-text-primary);
+		margin-left: 3px;
+	}
+	.ing__barwrap {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.ing__meta {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+	}
+	.ing__pct {
+		font-size: 12.5px;
+		color: var(--color-text-faint);
+	}
+	.ing__pct b {
+		color: var(--color-text);
+		font-weight: 700;
+	}
+	.ing__btns {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
 	}
 
-	.mv-name {
-		font-family: var(--font-sans);
-		font-size: 0.9375rem;
+	/* Movements */
+	.moves__list {
+		display: flex;
+		flex-direction: column;
+	}
+	.move {
+		display: flex;
+		align-items: flex-start;
+		gap: 14px;
+		padding: 14px 4px;
+		border-bottom: 1px solid var(--color-line);
+	}
+	.move:last-child {
+		border-bottom: none;
+	}
+	.move__ic {
+		width: 32px;
+		height: 32px;
+		border-radius: 9px;
+		display: grid;
+		place-items: center;
+		flex: none;
+	}
+	.move__ic--in {
+		background: color-mix(in srgb, var(--color-green) 14%, transparent);
+		color: var(--color-green);
+	}
+	.move__ic--out {
+		background: color-mix(in srgb, var(--color-amber) 14%, transparent);
+		color: var(--color-amber);
+	}
+	.move__info {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+	.move__top {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+	.move__name {
 		font-weight: 700;
-		color: var(--color-text-primary);
-		overflow: hidden;
-		text-overflow: ellipsis;
+		font-size: 14px;
+		color: var(--color-text);
+	}
+	.move__who {
+		font-size: 11.5px;
+		color: var(--color-text-faint);
+	}
+	.move__note {
+		font-size: 11.5px;
+		color: var(--color-text-dim);
+	}
+	.move__delta {
+		font-weight: 800;
+		font-size: 14px;
 		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+	.move__delta--in {
+		color: var(--color-green);
+	}
+	.move__delta--out {
+		color: var(--color-text-dim);
 	}
 
-	.mv-meta {
-		font-family: var(--font-sans);
-		font-size: 0.8125rem;
-		color: var(--color-text-muted);
-	}
-
-	.mv-note {
-		font-family: var(--font-sans);
-		font-size: 0.8125rem;
-		color: var(--color-text-secondary);
-	}
-
-	.mv-qty {
-		flex-shrink: 0;
-		font-family: var(--font-mono);
-		font-size: 1.0625rem;
-		font-weight: 700;
-		color: var(--color-text-secondary);
-	}
-
-	.mv-qty.pos {
-		color: var(--color-success);
-	}
-
-	.mv-qty.neg {
-		color: var(--color-danger);
-	}
-
+	/* Modal stat box */
 	.modal-stat {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
 		padding: 12px 16px;
-		background: var(--color-surface-base);
-		border-radius: var(--radius-md);
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-line);
+		border-radius: 11px;
 	}
-
 	.modal-stat-label {
 		font-family: var(--font-sans);
 		font-size: 0.875rem;
-		color: var(--color-text-secondary);
+		color: var(--color-text-dim);
 	}
-
 	.modal-stat-value {
-		font-family: var(--font-mono);
 		font-size: 1.125rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+		font-weight: 800;
+		color: var(--color-text);
+		font-variant-numeric: tabular-nums;
 	}
 
+	/* FAB */
 	.fab {
 		position: fixed;
 		right: 20px;
 		bottom: 88px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		display: grid;
+		place-items: center;
 		width: 56px;
 		height: 56px;
 		border: none;
 		border-radius: var(--radius-full);
-		background: var(--color-accent);
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
-		font-size: 2rem;
-		line-height: 1;
 		cursor: pointer;
-		box-shadow:
-			0 10px 20px rgba(0, 0, 0, 0.12),
-			0 4px 8px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 12px 26px -8px color-mix(in srgb, var(--color-mustard) 70%, transparent);
 		transition:
-			background 150ms ease,
+			filter 150ms ease,
 			transform 150ms ease;
 		z-index: 30;
 	}
-
 	.fab:hover {
-		background: var(--color-accent-hover);
+		filter: brightness(1.06);
 	}
-
 	.fab:active {
 		transform: scale(0.92);
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 1024px) {
 		.fab {
 			bottom: 24px;
+		}
+	}
+	@media (max-width: 1024px) {
+		.inggrid {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 640px) {
+		.page {
+			padding: 18px 16px 90px;
 		}
 	}
 </style>

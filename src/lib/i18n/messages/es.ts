@@ -4,8 +4,7 @@ export const es = {
 	app: {
 		name: 'Bulldog CBO',
 		tagline: 'Sistema POS — Bulldog CBO',
-		loading: 'Cargando…',
-		hotdog: '🌭'
+		loading: 'Cargando…'
 	},
 	login: {
 		title: 'Iniciar sesión',
@@ -35,6 +34,16 @@ export const es = {
 	role: {
 		owner: 'Dueño',
 		worker: 'Trabajador'
+	},
+	pageSubtitle: {
+		dashboard: 'Resumen del turno de hoy',
+		pos: 'Arma el pedido y cobra',
+		orders: 'Pedidos abiertos e historial',
+		ingredients: 'Inventario y reposición',
+		menu: 'Productos y recetas',
+		customers: 'Clientes y crédito',
+		shifts: 'Apertura y cierre de caja',
+		settings: 'Ajustes del sistema'
 	},
 	pos: {
 		title: 'Punto de venta',

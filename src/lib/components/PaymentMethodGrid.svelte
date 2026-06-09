@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
 	import type { PaymentMethod } from '$lib/types';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let { value = $bindable(null) }: { value?: PaymentMethod | null } = $props();
 
 	const METHODS: { method: PaymentMethod; icon: string }[] = [
-		{ method: 'cash_usd', icon: '💵' },
-		{ method: 'cash_bs', icon: '💵' },
-		{ method: 'card', icon: '💳' },
-		{ method: 'pagomovil', icon: '📱' },
-		{ method: 'transfer', icon: '🏦' },
-		{ method: 'zinli', icon: '🟣' },
-		{ method: 'binance', icon: '🟡' },
-		{ method: 'paypal', icon: '🅿️' },
-		{ method: 'credit', icon: '📒' }
+		{ method: 'cash_usd', icon: 'cash' },
+		{ method: 'cash_bs', icon: 'coin' },
+		{ method: 'card', icon: 'card' },
+		{ method: 'pagomovil', icon: 'phone' },
+		{ method: 'transfer', icon: 'bank' },
+		{ method: 'zinli', icon: 'wallet' },
+		{ method: 'binance', icon: 'coin' },
+		{ method: 'paypal', icon: 'globe' },
+		{ method: 'credit', icon: 'creditclock' }
 	];
 
 	function toggle(method: PaymentMethod): void {
@@ -21,59 +22,63 @@
 	}
 </script>
 
-<div class="grid grid-cols-3 gap-2" role="group">
+<div class="paygrid" role="group">
 	{#each METHODS as { method, icon } (method)}
 		<button
 			type="button"
-			class="method"
+			class="pay"
 			class:selected={value === method}
 			aria-pressed={value === method}
 			onclick={() => toggle(method)}
 		>
-			<span class="icon" aria-hidden="true">{icon}</span>
+			<Icon name={icon} size={18} />
 			<span class="label">{t('payment.' + method)}</span>
 		</button>
 	{/each}
 </div>
 
 <style>
-	.method {
+	.paygrid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 8px;
+	}
+
+	.pay {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 0.25rem;
-		min-height: 56px;
-		padding: 0.5rem 0.375rem;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-raised);
-		color: var(--color-text-primary);
+		gap: 6px;
+		min-height: 66px;
+		padding: 11px 6px;
+		border: 1px solid var(--color-line);
+		border-radius: 11px;
+		background: var(--color-surface-2);
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
+		font-size: 11px;
+		font-weight: 600;
+		text-align: center;
 		cursor: pointer;
 		transition:
-			border-color 150ms ease,
-			background 150ms ease,
-			transform 150ms ease;
+			border-color 140ms ease,
+			background 140ms ease,
+			color 140ms ease;
 	}
 
-	.method:active {
-		transform: scale(0.97);
+	.pay:hover {
+		border-color: var(--color-line-2);
+		color: var(--color-text);
 	}
 
-	.method.selected {
-		border: 2px solid var(--color-accent);
-		background: color-mix(in srgb, var(--color-secondary) 18%, var(--color-surface-raised));
-	}
-
-	.icon {
-		font-size: 1.25rem;
-		line-height: 1;
+	.pay.selected {
+		background: var(--color-mustard-soft);
+		border-color: var(--color-mustard);
+		color: var(--color-mustard);
 	}
 
 	.label {
-		font-size: 0.75rem;
 		line-height: 1.1;
-		text-align: center;
 	}
 </style>

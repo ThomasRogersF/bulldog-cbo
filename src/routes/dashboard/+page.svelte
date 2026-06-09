@@ -120,8 +120,16 @@
 	);
 	const maxHourly = $derived(Math.max(0, ...hourlySales));
 
-	const BAR_W = 100; // viewBox width unit basis
 	const maxTopQty = $derived(Math.max(0, ...topItems.map((it) => it.qty)));
+
+	// Peak hour (for the highlighted bar) + chart total.
+	const peakIndex = $derived(
+		hourSpan.reduce((best, b, i, arr) => (b.value > arr[best].value ? i : best), 0)
+	);
+	const yTicks = [1, 0.75, 0.5, 0.25, 0];
+	function compactUsd(n: number): string {
+		return formatUsd(n).replace(/[.,]00$/, '');
+	}
 
 	// ── Quick restock ───────────────────────────────────────────────────────
 	function openRestock(item: IngredientStock): void {
@@ -161,85 +169,95 @@
 	}
 </script>
 
-<div class="page flex flex-col gap-6 p-4 md:p-6">
-	<header class="flex items-center justify-between gap-3">
-		<h1 class="title">{t('dashboard.title')}</h1>
-	</header>
-
+<div class="page">
 	{#if loading}
 		<div class="flex items-center justify-center py-16">
 			<LoadingSpinner size="lg" />
 		</div>
 	{:else}
 		<!-- KPI ROW -->
-		<section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+		<section class="kpi-row">
 			<KpiCard
-				icon="💰"
+				icon="cash"
 				label={t('dashboard.salesToday')}
 				value={formatUsd(salesUsd)}
 				sub={formatBs(salesBs)}
 			/>
-			<KpiCard icon="📦" label={t('dashboard.ordersToday')} value={String(orderCount)} />
-			<KpiCard icon="🎯" label={t('dashboard.avgTicket')} value={formatUsd(avgTicket)} />
-			<KpiCard icon="👥" label={t('dashboard.customersToday')} value={String(customersToday)} />
+			<KpiCard icon="bag" label={t('dashboard.ordersToday')} value={String(orderCount)} />
+			<KpiCard icon="tag" label={t('dashboard.avgTicket')} value={formatUsd(avgTicket)} />
+			<KpiCard icon="users" label={t('dashboard.customersToday')} value={String(customersToday)} />
 		</section>
 
 		<!-- CHARTS -->
-		<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+		<section class="panel-mid">
 			<!-- Sales by hour -->
 			<Card>
-				<h2 class="section-title mb-3">{t('dashboard.salesByHour')}</h2>
+				<div class="card__head">
+					<h2 class="card__title">{t('dashboard.salesByHour')}</h2>
+					<div class="chart__total">
+						<span class="chart__total-num tabular-nums">{formatUsd(salesUsd)}</span>
+						<span class="chart__total-bs tabular-nums">{formatBs(salesBs)}</span>
+					</div>
+				</div>
 				{#if maxHourly <= 0}
 					<p class="chart-empty">{t('dashboard.noData')}</p>
 				{:else}
-					<svg
-						class="chart"
-						viewBox="0 0 {BAR_W} 44"
-						preserveAspectRatio="none"
-						role="img"
-						aria-label={t('dashboard.salesByHour')}
-					>
-						{#each hourSpan as bucket, i (bucket.hour)}
-							{@const slot = BAR_W / hourSpan.length}
-							{@const barW = slot * 0.7}
-							{@const x = i * slot + (slot - barW) / 2}
-							{@const h = maxHourly > 0 ? (bucket.value / maxHourly) * 36 : 0}
-							<rect {x} y={40 - h} width={barW} height={h} rx="0.6" class="bar">
-								<title>{pad2(bucket.hour)}:00 — {formatUsd(bucket.value)}</title>
-							</rect>
-						{/each}
-					</svg>
-					<div class="hour-labels flex justify-between mt-1">
-						<span class="axis tabular-nums">{pad2(firstHour)}:00</span>
-						{#if lastHour !== firstHour}
-							<span class="axis tabular-nums">{pad2(lastHour)}:00</span>
-						{/if}
+					<div class="chart__plot">
+						<div class="chart__ylabels">
+							{#each yTicks as g (g)}
+								<span>{compactUsd(maxHourly * g)}</span>
+							{/each}
+						</div>
+						<div class="chart__lines"></div>
+						<div class="chart__bars">
+							{#each hourSpan as bucket, i (bucket.hour)}
+								<div class="barcol">
+									<div class="barslot">
+										<span class="barval tabular-nums" style:opacity={i === peakIndex ? 1 : 0.5}>
+											{compactUsd(bucket.value)}
+										</span>
+										<div
+											class="bar"
+											class:bar--peak={i === peakIndex}
+											style:height="{Math.max((bucket.value / maxHourly) * 90, 2)}%"
+										></div>
+									</div>
+									<span class="barlbl tabular-nums">{pad2(bucket.hour)}</span>
+								</div>
+							{/each}
+						</div>
 					</div>
 				{/if}
 			</Card>
 
 			<!-- Top items -->
 			<Card>
-				<h2 class="section-title mb-3">{t('dashboard.topItems')}</h2>
+				<div class="card__head">
+					<h2 class="card__title">{t('dashboard.topItems')}</h2>
+					<Badge variant="secondary" icon="crown">{t('dashboard.topItems')}</Badge>
+				</div>
 				{#if topItems.length === 0}
 					<p class="chart-empty">{t('dashboard.noData')}</p>
 				{:else}
-					<ul class="flex flex-col gap-2.5">
-						{#each topItems as item (item.name)}
+					<div class="toplist">
+						{#each topItems as item, i (item.name)}
 							{@const ratio = maxTopQty > 0 ? item.qty / maxTopQty : 0}
-							<li class="topitem">
-								<div class="flex items-center justify-between gap-2 mb-1">
-									<span class="topitem-name">{item.name}</span>
-									<span class="topitem-qty tabular-nums"
-										>{formatQty(item.qty)} {t('dashboard.units')}</span
-									>
+							<div class="toprow">
+								<span class="rank" class:rank--gold={i === 0}>{i + 1}</span>
+								<div class="toprow__main">
+									<div class="toprow__head">
+										<span class="toprow__name">{item.name}</span>
+										<span class="toprow__units tabular-nums"
+											>{formatQty(item.qty)} <i>{t('dashboard.units')}</i></span
+										>
+									</div>
+									<div class="track">
+										<div class="track__fill" style:width="{ratio * 100}%"></div>
+									</div>
 								</div>
-								<div class="topbar-track">
-									<div class="topbar-fill" style:width="{ratio * 100}%"></div>
-								</div>
-							</li>
+							</div>
 						{/each}
-					</ul>
+					</div>
 				{/if}
 			</Card>
 		</section>
@@ -248,35 +266,37 @@
 		<section>
 			{#if shiftStore.active}
 				<Card>
-					<div class="flex flex-wrap items-start justify-between gap-4">
-						<div class="flex flex-col gap-2">
-							<div class="flex items-center gap-2">
-								<h2 class="section-title">{t('dashboard.activeShift')}</h2>
-								<Badge variant="success">#{shiftStore.active.shift_number}</Badge>
+					<div class="shiftcard">
+						<div class="shiftcard__main">
+							<div class="shiftcard__title">
+								<span class="dot-live"></span>
+								<h2 class="card__title">{t('dashboard.activeShift')}</h2>
+								<Badge variant="secondary">#{shiftStore.active.shift_number}</Badge>
 							</div>
-							<div class="shift-meta flex flex-wrap gap-x-6 gap-y-1">
-								<span
-									>{t('shifts.openedBy')}:
-									<strong>{shiftStore.active.opened_by_name ?? '—'}</strong></span
-								>
-								<span
-									>{t('shifts.duration')}:
-									<strong class="tabular-nums">{formatDuration(shiftStore.active.opened_at)}</strong
-									></span
-								>
-								<span
-									>{t('dashboard.ordersToday')}:
-									<strong class="tabular-nums">{shiftStore.active.confirmed_orders}</strong></span
-								>
-								<span
-									>{t('shifts.salesTotal')}:
-									<strong class="tabular-nums"
-										>{formatUsd(shiftStore.active.total_sales_usd)}</strong
-									></span
-								>
+							<div class="shiftcard__stats">
+								<div class="sstat">
+									<span class="sstat__l">{t('shifts.openedBy')}</span>
+									<span class="sstat__v">{shiftStore.active.opened_by_name ?? '—'}</span>
+								</div>
+								<div class="sstat">
+									<span class="sstat__l">{t('shifts.duration')}</span>
+									<span class="sstat__v tabular-nums"
+										>{formatDuration(shiftStore.active.opened_at)}</span
+									>
+								</div>
+								<div class="sstat">
+									<span class="sstat__l">{t('dashboard.ordersToday')}</span>
+									<span class="sstat__v tabular-nums">{shiftStore.active.confirmed_orders}</span>
+								</div>
+								<div class="sstat">
+									<span class="sstat__l">{t('shifts.salesTotal')}</span>
+									<span class="sstat__v sstat__v--hi tabular-nums"
+										>{formatUsd(shiftStore.active.total_sales_usd)}</span
+									>
+								</div>
 							</div>
 						</div>
-						<Button variant="danger" onclick={() => goto(resolve('/shifts'))}>
+						<Button variant="danger" icon="x" onclick={() => goto(resolve('/shifts'))}>
 							{t('shifts.close')}
 						</Button>
 					</div>
@@ -285,10 +305,10 @@
 				<Card>
 					<div class="flex flex-wrap items-center justify-between gap-4">
 						<div class="flex flex-col gap-1">
-							<h2 class="section-title">{t('shifts.noActive')}</h2>
+							<h2 class="card__title">{t('shifts.noActive')}</h2>
 							<p class="muted">{t('shifts.noActivePrompt')}</p>
 						</div>
-						<Button variant="primary" onclick={() => goto(resolve('/shifts'))}>
+						<Button variant="primary" icon="clock" onclick={() => goto(resolve('/shifts'))}>
 							{t('shifts.open')}
 						</Button>
 					</div>
@@ -298,8 +318,8 @@
 
 		<!-- LOW STOCK -->
 		<section class="flex flex-col gap-3">
-			<div class="flex items-center gap-2">
-				<h2 class="section-title">{t('dashboard.lowStock')}</h2>
+			<div class="lowstock__title">
+				<h2 class="card__title">{t('dashboard.lowStock')}</h2>
 				{#if lowStock.length > 0}
 					<Badge variant="danger">{lowStock.length}</Badge>
 				{/if}
@@ -307,27 +327,37 @@
 
 			{#if lowStock.length === 0}
 				<Card>
-					<EmptyState icon="✅" title={t('dashboard.noLowStock')} />
+					<EmptyState icon="checkcircle" title={t('dashboard.noLowStock')} />
 				</Card>
 			{:else}
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<div class="lowgrid">
 					{#each lowStock as ing (ing.id)}
-						<div class="alert-card">
-							<div class="flex items-start justify-between gap-3 mb-3">
-								<div class="flex flex-col gap-1 min-w-0">
-									<span class="ing-name">{ing.name}</span>
-									<Badge variant={ing.is_out_of_stock ? 'danger' : 'warning'}>
-										{ing.is_out_of_stock ? t('ingredients.outOfStock') : t('ingredients.lowStock')}
-									</Badge>
-								</div>
-								<Button size="sm" variant="primary" onclick={() => openRestock(ing)}>
-									{t('dashboard.quickRestock')}
-								</Button>
+						<div class="lowitem lowitem--{ing.is_out_of_stock ? 'low' : 'mid'}">
+							<div class="lowitem__top">
+								<span class="lowitem__name">{ing.name}</span>
+								<Badge variant={ing.is_out_of_stock ? 'danger' : 'warning'}>
+									{ing.is_out_of_stock ? t('ingredients.outOfStock') : t('ingredients.lowStock')}
+								</Badge>
 							</div>
-							<StockBar current={ing.current_stock} min={ing.min_stock} unit={ing.unit} />
-							<p class="ing-min tabular-nums mt-2">
+							<div class="lowitem__qty tabular-nums">{formatQty(ing.current_stock, ing.unit)}</div>
+							<StockBar
+								current={ing.current_stock}
+								min={ing.min_stock}
+								unit={ing.unit}
+								showValue={false}
+							/>
+							<p class="lowitem__min tabular-nums">
 								{t('ingredients.minStock')}: {formatQty(ing.min_stock, ing.unit)}
 							</p>
+							<Button
+								size="sm"
+								variant="secondary"
+								icon="refill"
+								full
+								onclick={() => openRestock(ing)}
+							>
+								{t('ingredients.restock')}
+							</Button>
 						</div>
 					{/each}
 				</div>
@@ -365,121 +395,326 @@
 		max-width: 1280px;
 		margin: 0 auto;
 		width: 100%;
+		padding: 24px 26px 44px;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
 		font-family: var(--font-sans);
 	}
 
-	.title {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+	.card__head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 18px;
 	}
 
-	.section-title {
-		font-size: 1.0625rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+	.card__title {
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--color-text);
+		white-space: nowrap;
 	}
 
 	.muted {
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 		font-size: 0.9375rem;
 	}
 
-	/* Charts */
-	.chart {
-		width: 100%;
-		height: 140px;
-		display: block;
-	}
-
-	.bar {
-		fill: var(--color-accent);
-		transition: fill 150ms ease;
-	}
-
-	.bar:hover {
-		fill: var(--color-accent-hover);
-	}
-
 	.chart-empty {
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 		font-size: 0.9375rem;
 		padding: 2rem 0;
 		text-align: center;
 	}
 
-	.axis {
-		font-size: 0.75rem;
-		color: var(--color-text-muted);
-		font-family: var(--font-mono);
+	/* KPI + layout grids */
+	.kpi-row {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
 	}
 
-	/* Top items horizontal bars */
-	.topitem-name {
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	.panel-mid {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr;
+		gap: 16px;
 	}
 
-	.topitem-qty {
-		font-size: 0.875rem;
-		font-family: var(--font-mono);
-		color: var(--color-text-secondary);
-		flex-shrink: 0;
+	/* Bar chart */
+	.chart__total {
+		text-align: right;
 	}
-
-	.topbar-track {
-		height: 10px;
+	.chart__total-num {
+		font-size: 20px;
+		font-weight: 800;
+		display: block;
+		color: var(--color-text);
+	}
+	.chart__total-bs {
+		font-size: 11.5px;
+		color: var(--color-text-faint);
+	}
+	.chart__plot {
+		position: relative;
+		padding-left: 52px;
+	}
+	.chart__ylabels {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 44px;
+		height: 210px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		text-align: right;
+		font-size: 10.5px;
+		color: var(--color-text-faint);
+	}
+	.chart__lines {
+		position: absolute;
+		left: 52px;
+		right: 0;
+		top: 0;
+		height: 210px;
+		pointer-events: none;
+		background: repeating-linear-gradient(to top, var(--color-line) 0 1px, transparent 1px 52.5px);
+	}
+	.chart__bars {
+		position: relative;
+		display: flex;
+		align-items: flex-end;
+		gap: 12px;
+	}
+	.barcol {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+	}
+	.barslot {
+		height: 210px;
 		width: 100%;
-		background: var(--color-surface-overlay);
-		border-radius: var(--radius-full);
-		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 6px;
 	}
-
-	.topbar-fill {
-		height: 100%;
-		background: var(--color-secondary);
-		border-radius: var(--radius-full);
-		transition: width 150ms ease;
-	}
-
-	/* Shift meta */
-	.shift-meta {
-		font-size: 0.9375rem;
-		color: var(--color-text-secondary);
-	}
-
-	.shift-meta strong {
-		color: var(--color-text-primary);
+	.barval {
+		font-size: 11px;
 		font-weight: 700;
+		color: var(--color-text);
+	}
+	.bar {
+		width: 100%;
+		max-width: 38px;
+		min-height: 6px;
+		border-radius: 7px 7px 2px 2px;
+		background: linear-gradient(180deg, var(--color-mustard), var(--color-mustard-deep));
+		transition: 0.25s;
+	}
+	.bar--peak {
+		box-shadow: 0 0 22px -4px color-mix(in srgb, var(--color-mustard) 50%, transparent);
+	}
+	.barlbl {
+		font-size: 11px;
+		color: var(--color-text-faint);
+		font-weight: 600;
 	}
 
-	/* Low-stock alert cards */
-	.alert-card {
-		background: var(--color-surface-raised);
-		border-radius: var(--radius-lg);
-		border-left: 4px solid var(--color-danger);
-		padding: 16px;
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.1),
-			0 1px 2px rgba(0, 0, 0, 0.06);
+	/* Top products */
+	.toplist {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
 	}
-
-	.ing-name {
-		font-size: 1rem;
+	.toprow {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 12px;
+		align-items: center;
+	}
+	.rank {
+		width: 26px;
+		height: 26px;
+		border-radius: 8px;
+		background: var(--color-surface-2);
+		color: var(--color-text-dim);
+		font-weight: 800;
+		font-size: 13px;
+		display: grid;
+		place-items: center;
+		flex: none;
+	}
+	.rank--gold {
+		background: var(--color-mustard);
+		color: var(--color-accent-fg);
+	}
+	.toprow__main {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 7px;
+	}
+	.toprow__head {
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+	}
+	.toprow__name {
 		font-weight: 700;
-		color: var(--color-text-primary);
+		font-size: 14px;
+		color: var(--color-text);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
+	.toprow__units {
+		font-size: 13px;
+		color: var(--color-text);
+		font-weight: 700;
+		white-space: nowrap;
+	}
+	.toprow__units i {
+		color: var(--color-text-faint);
+		font-style: normal;
+		font-size: 11px;
+		font-weight: 600;
+	}
+	.track {
+		height: 8px;
+		background: var(--color-surface-3);
+		border-radius: 9999px;
+		overflow: hidden;
+	}
+	.track__fill {
+		height: 100%;
+		background: var(--color-mustard);
+		border-radius: 9999px;
+		transition: width 0.3s;
+	}
 
-	.ing-min {
-		font-size: 0.8125rem;
-		color: var(--color-text-muted);
-		font-family: var(--font-mono);
+	/* Active shift card */
+	.shiftcard {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+		flex-wrap: wrap;
+	}
+	.shiftcard__main {
+		flex: 1;
+		min-width: 0;
+	}
+	.shiftcard__title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 16px;
+	}
+	.shiftcard__stats {
+		display: flex;
+		gap: 34px;
+		flex-wrap: wrap;
+	}
+	.sstat {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.sstat__l {
+		font-size: 10.5px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-text-faint);
+		font-weight: 600;
+	}
+	.sstat__v {
+		font-size: 15px;
+		font-weight: 700;
+		color: var(--color-text);
+	}
+	.sstat__v--hi {
+		color: var(--color-mustard);
+		font-weight: 800;
+	}
+
+	/* Low stock */
+	.lowstock__title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.lowgrid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 12px;
+	}
+	.lowitem {
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-line);
+		border-radius: 14px;
+		padding: 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 11px;
+	}
+	.lowitem--low {
+		border-color: color-mix(in srgb, var(--color-red) 30%, transparent);
+	}
+	.lowitem--mid {
+		border-color: color-mix(in srgb, var(--color-amber) 26%, transparent);
+	}
+	.lowitem__top {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 8px;
+	}
+	.lowitem__name {
+		font-weight: 700;
+		font-size: 13.5px;
+		color: var(--color-text);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.lowitem__qty {
+		font-size: 22px;
+		font-weight: 800;
+		color: var(--color-text);
+	}
+	.lowitem__min {
+		font-size: 11.5px;
+		color: var(--color-text-faint);
+	}
+
+	@media (max-width: 1240px) {
+		.panel-mid {
+			grid-template-columns: 1fr;
+		}
+		.lowgrid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 1100px) {
+		.kpi-row {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 640px) {
+		.page {
+			padding: 18px 16px 80px;
+		}
+		.kpi-row {
+			grid-template-columns: 1fr 1fr;
+		}
+		.lowgrid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

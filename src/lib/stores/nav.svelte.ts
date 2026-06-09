@@ -11,38 +11,44 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-	{ href: '/dashboard', labelKey: 'nav.dashboard', icon: '🏠', roles: ['owner'], primary: true },
-	{ href: '/pos', labelKey: 'nav.pos', icon: '🛒', roles: ['owner', 'worker'], primary: true },
+	{ href: '/dashboard', labelKey: 'nav.dashboard', icon: 'home', roles: ['owner'], primary: true },
+	{
+		href: '/pos',
+		labelKey: 'nav.pos',
+		icon: 'register',
+		roles: ['owner', 'worker'],
+		primary: true
+	},
 	{
 		href: '/orders',
 		labelKey: 'nav.orders',
-		icon: '📋',
+		icon: 'receipt',
 		roles: ['owner', 'worker'],
 		primary: true
 	},
 	{
 		href: '/ingredients',
 		labelKey: 'nav.ingredients',
-		icon: '📦',
+		icon: 'box',
 		roles: ['owner'],
 		primary: true
 	},
-	{ href: '/menu', labelKey: 'nav.menu', icon: '🍽️', roles: ['owner'], primary: false },
+	{ href: '/menu', labelKey: 'nav.menu', icon: 'utensils', roles: ['owner'], primary: false },
 	{
 		href: '/customers',
 		labelKey: 'nav.customers',
-		icon: '👥',
+		icon: 'users',
 		roles: ['owner', 'worker'],
 		primary: false
 	},
 	{
 		href: '/shifts',
 		labelKey: 'nav.shifts',
-		icon: '🕐',
+		icon: 'clock',
 		roles: ['owner', 'worker'],
 		primary: false
 	},
-	{ href: '/settings', labelKey: 'nav.settings', icon: '⚙️', roles: ['owner'], primary: false }
+	{ href: '/settings', labelKey: 'nav.settings', icon: 'gear', roles: ['owner'], primary: false }
 ];
 
 export const navStore = $state({ mobileMenuOpen: false });

@@ -49,31 +49,33 @@
 
 <style>
 	.field-label {
-		font-size: 13px;
-		font-weight: 600;
-		color: var(--color-text-secondary);
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--color-text-dim);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
 		font-family: var(--font-sans);
 	}
 
 	.field-input {
 		min-height: 48px;
-		padding: 12px;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
-		color: var(--color-text-primary);
+		padding: 12px 14px;
+		border: 1px solid var(--color-line-2);
+		border-radius: 11px;
+		background: var(--color-surface-2);
+		color: var(--color-text);
 		font-family: var(--font-sans);
-		font-size: 16px;
+		font-size: 15px;
 		transition: border-color 150ms ease;
 	}
 
 	.field-input:focus {
 		outline: none;
-		border-color: var(--color-accent);
+		border-color: var(--color-mustard);
 	}
 
 	.field-input.has-error {
-		border-color: var(--color-danger);
+		border-color: var(--color-red);
 	}
 
 	.field-input:disabled {
@@ -82,18 +84,18 @@
 	}
 
 	.field-input::placeholder {
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 	}
 
 	.field-error {
 		font-size: 12px;
-		color: var(--color-danger);
+		color: var(--color-red);
 		font-family: var(--font-sans);
 	}
 
 	.field-helper {
 		font-size: 12px;
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 		font-family: var(--font-sans);
 	}
 </style>

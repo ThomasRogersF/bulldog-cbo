@@ -5,7 +5,6 @@
 	import { toast } from '$lib/stores/toast.svelte';
 	import { t } from '$lib/i18n';
 
-	import Card from '$lib/components/Card.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import Button from '$lib/components/Button.svelte';
 
@@ -32,41 +31,36 @@
 </script>
 
 <div class="login-page">
-	<div class="login-box">
-		<Card elevation={2} padding="lg">
-			<form class="flex flex-col gap-5" onsubmit={handleSubmit}>
-				<div class="text-center">
-					<div class="wordmark">
-						<span aria-hidden="true">🌭</span> Bulldog CBO
-					</div>
-					<p class="subtitle">{t('login.subtitle')}</p>
+	<div class="login-card">
+		<img class="logo" src="/bulldog-logo.png" alt="Bulldog Hotdog" />
+		<h1 class="title">{t('app.name')}</h1>
+		<p class="subtitle">{t('login.subtitle')}</p>
+
+		<form class="form" onsubmit={handleSubmit}>
+			{#if hasError}
+				<div class="error-banner" role="alert">
+					{t('login.invalidCredentials')}
 				</div>
+			{/if}
 
-				{#if hasError}
-					<div class="error-banner" role="alert">
-						{t('login.invalidCredentials')}
-					</div>
-				{/if}
+			<Input
+				label={t('login.email')}
+				type="email"
+				inputmode="email"
+				placeholder={t('login.emailPlaceholder')}
+				bind:value={email}
+			/>
+			<Input
+				label={t('login.password')}
+				type="password"
+				placeholder={t('login.passwordPlaceholder')}
+				bind:value={password}
+			/>
 
-				<Input
-					label={t('login.email')}
-					type="email"
-					inputmode="email"
-					placeholder={t('login.emailPlaceholder')}
-					bind:value={email}
-				/>
-				<Input
-					label={t('login.password')}
-					type="password"
-					placeholder={t('login.passwordPlaceholder')}
-					bind:value={password}
-				/>
-
-				<Button type="submit" size="lg" full loading={submitting}>
-					{submitting ? t('login.submitting') : t('login.submit')}
-				</Button>
-			</form>
-		</Card>
+			<Button type="submit" size="lg" full loading={submitting}>
+				{submitting ? t('login.submitting') : t('login.submit')}
+			</Button>
+		</form>
 	</div>
 </div>
 
@@ -76,37 +70,57 @@
 		align-items: center;
 		justify-content: center;
 		min-height: 100vh;
-		padding: 24px;
-		background: var(--color-surface-base);
+		padding: 20px;
+		background: var(--color-bg);
 		font-family: var(--font-sans);
 	}
 
-	.login-box {
-		width: 100%;
-		max-width: 380px;
+	.login-card {
+		width: calc(100% - 40px);
+		max-width: 420px;
+		padding: 36px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-line);
+		border-radius: 20px;
+		text-align: center;
 	}
 
-	.wordmark {
-		font-family: var(--font-sans);
-		font-weight: 700;
-		font-size: 32px;
-		line-height: 1.1;
-		color: var(--color-accent);
+	.logo {
+		width: 120px;
+		height: auto;
+		margin: 0 auto 24px;
+		display: block;
+		border-radius: 16px;
+	}
+
+	.title {
+		font-size: 26px;
+		font-weight: 900;
+		letter-spacing: -0.02em;
+		color: var(--color-text);
 	}
 
 	.subtitle {
-		margin-top: 8px;
-		font-size: 14px;
-		color: var(--color-text-muted);
+		margin-top: 6px;
+		margin-bottom: 28px;
+		font-size: 13px;
+		color: var(--color-text-faint);
+	}
+
+	.form {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		text-align: left;
 	}
 
 	.error-banner {
-		padding: 10px 12px;
-		border-radius: var(--radius-md);
-		background: var(--color-danger);
-		color: var(--color-danger-fg);
+		padding: 12px;
+		border-radius: 11px;
+		background: color-mix(in srgb, var(--color-red) 12%, transparent);
+		border-left: 3px solid var(--color-red);
+		color: var(--color-red);
 		font-size: 14px;
 		font-weight: 600;
-		text-align: center;
 	}
 </style>

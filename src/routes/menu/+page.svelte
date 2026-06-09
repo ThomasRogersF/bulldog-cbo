@@ -16,6 +16,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	type Tab = 'menu' | 'recipes';
 
@@ -228,13 +229,12 @@
 	}
 </script>
 
-<div class="page flex flex-col gap-4 p-4 md:p-6">
-	<header class="flex flex-wrap items-center justify-between gap-3">
-		<h1 class="page-title">{t('menu.title')}</h1>
-		{#if activeTab === 'menu'}
-			<Button onclick={openCreate}>+ {t('menu.addItem')}</Button>
-		{/if}
-	</header>
+<div class="page flex flex-col gap-4">
+	{#if activeTab === 'menu'}
+		<header class="flex justify-end">
+			<Button icon="plus" onclick={openCreate}>{t('menu.addItem')}</Button>
+		</header>
+	{/if}
 
 	<!-- Tabs -->
 	<div class="tabs flex" role="tablist">
@@ -265,9 +265,9 @@
 			<LoadingSpinner size="lg" />
 		</div>
 	{:else if items.length === 0}
-		<EmptyState icon="🌭" title={t('menu.noItems')}>
+		<EmptyState icon="utensils" title={t('menu.noItems')}>
 			{#snippet action()}
-				<Button onclick={openCreate}>+ {t('menu.addItem')}</Button>
+				<Button icon="plus" onclick={openCreate}>{t('menu.addItem')}</Button>
 			{/snippet}
 		</EmptyState>
 	{:else if activeTab === 'menu'}
@@ -281,9 +281,6 @@
 							class="category-header flex items-center gap-2"
 							style="--cat-color: {category.color}"
 						>
-							{#if category.emoji}
-								<span class="cat-emoji" aria-hidden="true">{category.emoji}</span>
-							{/if}
 							<span class="cat-name">{category.name}</span>
 						</div>
 						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -460,7 +457,7 @@
 								aria-label={t('common.delete')}
 								onclick={() => removeRecipeRow(row.key)}
 							>
-								&times;
+								<Icon name="x" size={18} />
 							</button>
 						</div>
 					{/each}
@@ -495,16 +492,13 @@
 />
 
 <style>
-	.page-title {
-		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+	.page {
+		padding: 24px 26px 44px;
 	}
 
 	.tabs {
 		gap: 4px;
-		border-bottom: 1px solid var(--color-surface-overlay);
+		border-bottom: 1px solid var(--color-line);
 	}
 
 	.tab {
@@ -512,10 +506,10 @@
 		padding: 0 16px;
 		background: transparent;
 		border: none;
-		border-bottom: 2px solid transparent;
-		color: var(--color-text-secondary);
+		border-bottom: 3px solid transparent;
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
-		font-weight: 600;
+		font-weight: 700;
 		font-size: 1rem;
 		cursor: pointer;
 		transition:
@@ -524,12 +518,12 @@
 	}
 
 	.tab:hover {
-		color: var(--color-text-primary);
+		color: var(--color-text);
 	}
 
 	.tab-active {
-		color: var(--color-accent);
-		border-bottom-color: var(--color-accent);
+		color: var(--color-mustard);
+		border-bottom-color: var(--color-mustard);
 	}
 
 	.category-header {
@@ -537,16 +531,17 @@
 		border-left: 4px solid var(--cat-color);
 	}
 
-	.cat-emoji {
-		font-size: 1.25rem;
-		line-height: 1;
-	}
-
 	.cat-name {
 		font-family: var(--font-sans);
-		font-weight: 700;
+		font-weight: 800;
 		font-size: 1.125rem;
-		color: var(--color-text-primary);
+		color: var(--color-text);
+	}
+
+	@media (max-width: 640px) {
+		.page {
+			padding: 18px 16px 80px;
+		}
 	}
 
 	.item-card {
@@ -658,12 +653,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 1.5rem;
 		line-height: 1;
 		background: transparent;
-		border: 1px solid var(--color-surface-overlay);
+		border: 1px solid var(--color-line-2);
 		border-radius: var(--radius-md);
-		color: var(--color-danger);
+		color: var(--color-red);
 		cursor: pointer;
 		transition:
 			background 150ms ease,
@@ -671,7 +665,7 @@
 	}
 
 	.remove-btn:hover {
-		background: var(--color-surface-overlay);
+		background: color-mix(in srgb, var(--color-red) 14%, transparent);
 	}
 
 	.remove-btn:active {
@@ -690,14 +684,14 @@
 		flex-shrink: 0;
 		border: none;
 		border-radius: var(--radius-full);
-		background: var(--color-surface-overlay);
+		background: var(--color-surface-3);
 		cursor: pointer;
 		transition: background 150ms ease;
 		padding: 0;
 	}
 
 	.switch-on {
-		background: var(--color-success);
+		background: var(--color-green);
 	}
 
 	.switch-knob {
@@ -707,11 +701,13 @@
 		width: 24px;
 		height: 24px;
 		border-radius: var(--radius-full);
-		background: var(--color-surface-raised);
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.1),
-			0 1px 2px rgba(0, 0, 0, 0.06);
+		background: var(--color-text);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 		transition: transform 150ms ease;
+	}
+
+	.switch-on .switch-knob {
+		background: var(--color-success-fg);
 	}
 
 	.switch-on .switch-knob {

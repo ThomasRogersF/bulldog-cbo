@@ -470,7 +470,7 @@ export const menuDb = {
 					.insert({
 						id: uuidv7(),
 						name: input.name,
-						color: input.color ?? '#D62828',
+						color: input.color ?? '#FDCD01',
 						emoji: input.emoji ?? null,
 						sort_order: input.sort_order ?? 0
 					})
@@ -604,7 +604,7 @@ export const ingredientsDb = {
 					.insert({
 						id: uuidv7(),
 						name: input.name,
-						color: input.color ?? '#6B7280',
+						color: input.color ?? '#6E6A60',
 						sort_order: input.sort_order ?? 0
 					})
 					.select()

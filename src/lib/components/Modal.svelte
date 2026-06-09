@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { t } from '$lib/i18n';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let {
 		open = $bindable(false),
@@ -39,7 +40,7 @@
 			<span></span>
 		{/if}
 		<button type="button" class="modal-close" aria-label={t('common.close')} onclick={handleClose}>
-			&times;
+			<Icon name="x" size={20} />
 		</button>
 	</div>
 	<div class="modal-body">
@@ -50,16 +51,14 @@
 <style>
 	.modal {
 		padding: 0;
-		border: none;
+		border: 1px solid var(--color-line);
 		width: 92vw;
 		max-width: 480px;
-		background: var(--color-surface-raised);
-		color: var(--color-text-primary);
-		border-radius: var(--radius-lg);
+		background: var(--color-surface);
+		color: var(--color-text);
+		border-radius: var(--r-card);
 		font-family: var(--font-sans);
-		box-shadow:
-			0 10px 20px rgba(0, 0, 0, 0.12),
-			0 4px 8px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.8);
 		margin: auto auto 16px auto;
 		transform: translateY(16px) scale(0.98);
 		opacity: 0;

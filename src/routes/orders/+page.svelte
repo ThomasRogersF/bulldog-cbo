@@ -155,9 +155,7 @@
 	}
 </script>
 
-<div class="page flex flex-col gap-4 p-4 md:p-6">
-	<h1 class="page-title">{t('orders.title')}</h1>
-
+<div class="page flex flex-col gap-4">
 	<!-- Tab bar -->
 	<div class="tabs flex" role="tablist">
 		<button
@@ -188,7 +186,7 @@
 				<LoadingSpinner size="lg" />
 			</div>
 		{:else if openOrders.length === 0}
-			<EmptyState icon="📋" title={t('orders.noOpen')} subtitle={t('orders.noOpenHint')} />
+			<EmptyState icon="receipt" title={t('orders.noOpen')} subtitle={t('orders.noOpenHint')} />
 		{:else}
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 				{#each openOrders as order (order.id)}
@@ -212,7 +210,7 @@
 		</div>
 
 		{#if filteredHistory.length === 0}
-			<EmptyState icon="🧾" title={t('orders.noHistory')} />
+			<EmptyState icon="receipt" title={t('orders.noHistory')} />
 		{:else}
 			<Card padding="none">
 				<ul class="rows">
@@ -348,18 +346,13 @@
 <style>
 	.page {
 		font-family: var(--font-sans);
-		color: var(--color-text-primary);
-	}
-
-	.page-title {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+		color: var(--color-text);
+		padding: 24px 26px 44px;
 	}
 
 	/* Tabs */
 	.tabs {
-		border-bottom: 1px solid var(--color-surface-overlay);
+		border-bottom: 1px solid var(--color-line);
 		gap: 4px;
 	}
 
@@ -368,8 +361,8 @@
 		padding: 0 16px;
 		font-family: var(--font-sans);
 		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-text-muted);
+		font-weight: 700;
+		color: var(--color-text-dim);
 		background: transparent;
 		border: none;
 		border-bottom: 3px solid transparent;
@@ -380,12 +373,18 @@
 	}
 
 	.tab:hover {
-		color: var(--color-text-secondary);
+		color: var(--color-text);
 	}
 
 	.tab.active {
-		color: var(--color-accent);
-		border-bottom-color: var(--color-accent);
+		color: var(--color-mustard);
+		border-bottom-color: var(--color-mustard);
+	}
+
+	@media (max-width: 640px) {
+		.page {
+			padding: 18px 16px 80px;
+		}
 	}
 
 	/* History rows */

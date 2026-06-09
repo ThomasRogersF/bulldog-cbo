@@ -26,6 +26,7 @@
 	import { dataVersion, track } from '$lib/stores/realtime.svelte';
 
 	import Button from '$lib/components/Button.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -47,6 +48,7 @@
 
 	// ── Local UI state ───────────────────────────────────────────────────────────
 	let selectedCategoryId = $state<string | null>(null);
+	let searchText = $state('');
 	let payment = $state<PaymentMethod | null>(null);
 	let discountText = $state('');
 
@@ -127,9 +129,23 @@
 	});
 
 	// ── Derived ──────────────────────────────────────────────────────────────────
-	const visibleItems = $derived(
-		selectedCategoryId === null ? items : items.filter((i) => i.category_id === selectedCategoryId)
-	);
+	const visibleItems = $derived.by(() => {
+		const q = searchText.trim().toLowerCase();
+		return items.filter((i) => {
+			const inCategory = selectedCategoryId === null || i.category_id === selectedCategoryId;
+			const matches = q === '' || i.name.toLowerCase().includes(q);
+			return inCategory && matches;
+		});
+	});
+
+	// menu_item_id -> total qty in the current cart (for the tile count badge)
+	const cartQtyById = $derived.by(() => {
+		const m = new SvelteMap<string, number>();
+		for (const line of cartStore.items) {
+			m.set(line.menuItem.id, (m.get(line.menuItem.id) ?? 0) + line.qty);
+		}
+		return m;
+	});
 
 	const selectedCustomerName = $derived(
 		cartStore.customerId
@@ -318,26 +334,36 @@
 		</div>
 	{:else}
 		<div class="shift-warning" role="alert">
-			<span class="shift-warning-text"
-				>⚠️ {t('pos.noOpenShift')} · {t('pos.salesWontRegister')}</span
-			>
+			<span class="shift-warning-text">
+				<Icon name="alert" size={16} />
+				{t('pos.noOpenShift')} · {t('pos.salesWontRegister')}
+			</span>
 			<button type="button" class="shift-warning-link" onclick={() => goto(resolve('/shifts'))}>
-				{t('pos.openShiftCta')} →
+				{t('pos.openShiftCta')}
+				<Icon name="arrowRight" size={15} />
 			</button>
 		</div>
 	{/if}
 
-	<div class="pos-grid">
-		<!-- ── LEFT: menu ─────────────────────────────────────────────────────── -->
-		<section class="menu-panel flex min-w-0 flex-col gap-3">
-			<h1 class="screen-title">{t('pos.title')}</h1>
+	<div class="pos">
+		<!-- ── LEFT: catalog ──────────────────────────────────────────────────── -->
+		<section class="pos__catalog">
+			<div class="pos__cat-head">
+				<div class="searchbox">
+					<Icon name="search" size={17} />
+					<input placeholder={t('common.search') + '…'} bind:value={searchText} />
+				</div>
+				<span class="pos__count tabular-nums"
+					>{visibleItems.length} {t('common.of')} {items.length}</span
+				>
+			</div>
 
 			<!-- Category pills -->
-			<div class="pills flex gap-2 overflow-x-auto pb-1" role="tablist">
+			<div class="tabs" role="tablist">
 				<button
 					type="button"
 					class="pill"
-					class:selected={selectedCategoryId === null}
+					class:pill--on={selectedCategoryId === null}
 					onclick={() => (selectedCategoryId = null)}
 				>
 					{t('pos.allCategories')}
@@ -346,30 +372,34 @@
 					<button
 						type="button"
 						class="pill"
-						class:selected={selectedCategoryId === cat.id}
-						style="--pill-color: {cat.color};"
+						class:pill--on={selectedCategoryId === cat.id}
 						onclick={() => (selectedCategoryId = cat.id)}
 					>
-						{#if cat.emoji}<span aria-hidden="true">{cat.emoji}</span>{/if}
-						<span>{cat.name}</span>
+						{cat.name}
 					</button>
 				{/each}
 			</div>
 
 			<!-- Menu grid -->
 			{#if visibleItems.length === 0}
-				<EmptyState icon="🌭" title={t('menu.noItems')} />
+				<EmptyState icon="search" title={t('menu.noItems')} />
 			{:else}
-				<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+				<div class="grid">
 					{#each visibleItems as item (item.id)}
-						<MenuItemCard {item} outOfStock={outOfStockIds.has(item.id)} onadd={handleAdd} />
+						<MenuItemCard
+							{item}
+							outOfStock={outOfStockIds.has(item.id)}
+							qtyInCart={cartQtyById.get(item.id) ?? 0}
+							bsText={usdRate > 0 ? formatBs(item.price_usd * usdRate) : undefined}
+							onadd={handleAdd}
+						/>
 					{/each}
 				</div>
 			{/if}
 		</section>
 
 		<!-- ── RIGHT: cart (sidebar on >=768px) ───────────────────────────────── -->
-		<aside class="cart-panel hidden md:flex md:flex-col">
+		<aside class="pos__cart hidden md:flex md:flex-col">
 			{@render cartContent()}
 		</aside>
 	</div>
@@ -379,7 +409,7 @@
 		<button type="button" class="cart-bar-btn" onclick={() => (cartOpen = true)}>
 			<span class="cart-bar-count tabular-nums">{cartSummary.count}</span>
 			<span class="cart-bar-total tabular-nums">{formatUsd(cartSummary.total)}</span>
-			<span class="cart-bar-cta">{t('pos.cart')} →</span>
+			<span class="cart-bar-cta">{t('pos.cart')} <Icon name="arrowRight" size={16} /></span>
 		</button>
 	</div>
 
@@ -414,7 +444,7 @@
 		{#if openOrdersLoading}
 			<div class="flex justify-center p-6"><LoadingSpinner /></div>
 		{:else if openOrders.length === 0}
-			<EmptyState icon="📭" title={t('orders.noOpen')} subtitle={t('orders.noOpenHint')} />
+			<EmptyState icon="receipt" title={t('orders.noOpen')} subtitle={t('orders.noOpenHint')} />
 		{:else}
 			<div class="flex max-h-[60vh] flex-col gap-2 overflow-y-auto">
 				{#each openOrders as order (order.id)}
@@ -456,7 +486,9 @@
 	{#if successOrderNumber !== null}
 		<div class="success-overlay" role="status" aria-live="polite">
 			<div class="success-card">
-				<span class="success-check" aria-hidden="true">✓</span>
+				<span class="success-check" aria-hidden="true"
+					><Icon name="check" size={40} stroke={3} /></span
+				>
 				<p class="success-title">{t('pos.orderConfirmed')}</p>
 				<p class="success-number tabular-nums">{t('orders.number')} #{successOrderNumber}</p>
 			</div>
@@ -466,19 +498,20 @@
 
 <!-- ── Reusable cart content (sidebar + sheet) ────────────────────────────── -->
 {#snippet cartContent()}
-	<div class="cart-inner flex h-full flex-col gap-3">
+	<div class="cart-inner">
 		<OrderTypeToggle bind:value={cartStore.orderType} />
 
 		<!-- Customer selector -->
-		<button type="button" class="customer-btn" onclick={openCustomerModal}>
-			<span class="customer-btn-label">{t('pos.customer')}</span>
-			<span class="customer-btn-value">{selectedCustomerName ?? t('pos.noCustomer')}</span>
+		<button type="button" class="clientrow" onclick={openCustomerModal}>
+			<span class="clientrow__l"><Icon name="users" size={16} /> {t('pos.customer')}</span>
+			<span class="clientrow__v">{selectedCustomerName ?? t('pos.noCustomer')}</span>
+			<Icon name={cartStore.customerId ? 'x' : 'plus'} size={16} />
 		</button>
 
 		<!-- Cart lines -->
-		<div class="cart-lines flex-1 overflow-y-auto">
+		<div class="cart-lines">
 			{#if cartStore.items.length === 0}
-				<EmptyState icon="🛒" title={t('pos.emptyCart')} subtitle={t('pos.emptyCartHint')} />
+				<EmptyState icon="cart" title={t('pos.emptyCart')} subtitle={t('pos.emptyCartHint')} />
 			{:else}
 				<div class="flex flex-col">
 					{#each cartStore.items as line (line.menuItem.id + (line.overrideReason ?? ''))}
@@ -498,7 +531,7 @@
 
 		<!-- Totals + payment -->
 		{#if cartStore.items.length > 0}
-			<div class="cart-totals flex flex-col gap-3">
+			<div class="cart-foot">
 				<Input
 					label={t('pos.discount')}
 					type="number"
@@ -507,53 +540,67 @@
 					placeholder="0.00"
 				/>
 
-				<div class="totals-box flex flex-col gap-1">
-					<div class="total-row flex items-center justify-between">
-						<span class="total-label">{t('pos.subtotal')}</span>
-						<span class="total-val tabular-nums">{formatUsd(cartSummary.subtotal)}</span>
+				<div class="totals">
+					<div class="totals__row">
+						<span>{t('pos.subtotal')}</span>
+						<span class="tabular-nums">{formatUsd(cartSummary.subtotal)}</span>
 					</div>
 					{#if cartStore.discount > 0}
-						<div class="total-row flex items-center justify-between">
-							<span class="total-label">{t('pos.discount')}</span>
-							<span class="total-val tabular-nums">−{formatUsd(cartStore.discount)}</span>
+						<div class="totals__row totals__row--disc">
+							<span>{t('pos.discount')}</span>
+							<span class="tabular-nums">−{formatUsd(cartStore.discount)}</span>
 						</div>
 					{/if}
-					<div class="total-row grand flex items-center justify-between">
-						<span class="total-label">{t('pos.total')}</span>
-						<span class="total-val tabular-nums">{formatUsd(cartSummary.total)}</span>
+					<div class="totals__row totals__row--grand">
+						<span>{t('pos.total')}</span>
+						<div class="totals__amt">
+							<span class="totals__usd tabular-nums">{formatUsd(cartSummary.total)}</span>
+							{#if usdRate > 0}
+								<span class="totals__bs tabular-nums">{formatBs(totalBs)}</span>
+							{/if}
+						</div>
 					</div>
-					{#if usdRate > 0}
-						<div class="total-row flex items-center justify-between">
-							<span class="rate-badge"
-								>{t('pos.usdRate')}: <span class="tabular-nums">{usdRate}</span></span
-							>
-							<span class="bs-val tabular-nums">{formatBs(totalBs)}</span>
-						</div>
-					{/if}
 				</div>
 
-				<div class="flex flex-col gap-1.5">
-					<span class="section-label">{t('pos.paymentMethod')}</span>
+				<div class="paysec">
+					<span class="paysec__l">{t('pos.paymentMethod')}</span>
 					<PaymentMethodGrid bind:value={payment} />
 				</div>
 			</div>
 		{/if}
 
 		<!-- Actions -->
-		<div class="cart-actions flex flex-col gap-2">
-			<Button size="lg" full loading={submitting} disabled={!canConfirm} onclick={confirmOrder}>
-				{t('pos.confirmOrder')}
+		<div class="cart-actions">
+			<Button
+				size="lg"
+				full
+				icon="check"
+				loading={submitting}
+				disabled={!canConfirm}
+				onclick={confirmOrder}
+			>
+				{cartStore.items.length === 0
+					? t('pos.emptyCart')
+					: `${t('pos.confirmOrder')} · ${formatUsd(cartSummary.total)}`}
 			</Button>
-			<div class="flex gap-2">
-				<Button variant="secondary" full loading={parking} onclick={parkOrder}>
+			<div class="cart-actions__row">
+				<Button
+					variant="secondary"
+					size="sm"
+					icon="pin"
+					full
+					loading={parking}
+					disabled={cartStore.items.length === 0}
+					onclick={parkOrder}
+				>
 					{t('pos.parkOrder')}
 				</Button>
-				<Button variant="ghost" full onclick={openExistingModal}>
+				<Button variant="ghost" size="sm" icon="receipt" full onclick={openExistingModal}>
 					{t('pos.addToExisting')}
 				</Button>
 			</div>
 			{#if cartStore.items.length > 0}
-				<Button variant="ghost" full onclick={() => (clearConfirmOpen = true)}>
+				<Button variant="ghost" size="sm" full onclick={() => (clearConfirmOpen = true)}>
 					{t('pos.clearCart')}
 				</Button>
 			{/if}
@@ -562,21 +609,15 @@
 {/snippet}
 
 <style>
-	.screen-title {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
-	}
-
 	/* Shift context bar (open) — subtle strip just below the TopBar */
 	.shift-bar {
-		padding: 6px 16px;
-		background: var(--color-surface-overlay);
-		color: var(--color-text-secondary);
+		padding: 7px 26px;
+		background: var(--color-surface-2);
+		border-bottom: 1px solid var(--color-line);
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
-		font-size: 0.8125rem;
+		font-size: 12.5px;
+		font-weight: 600;
 		text-align: center;
 	}
 
@@ -586,203 +627,296 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		padding: 10px 16px;
-		background: color-mix(in srgb, var(--color-warning) 18%, transparent);
-		color: var(--color-text-primary);
+		padding: 10px 26px;
+		background: color-mix(in srgb, var(--color-red) 10%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-red) 22%, transparent);
+		color: var(--color-red);
 		font-family: var(--font-sans);
-		font-size: 0.8125rem;
+		font-size: 13px;
+		font-weight: 600;
 	}
-
 	.shift-warning-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
 		min-width: 0;
 	}
-
 	.shift-warning-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
 		flex: 0 0 auto;
 		border: none;
 		background: transparent;
-		color: var(--color-warning);
+		color: var(--color-mustard);
 		font-family: var(--font-sans);
 		font-weight: 700;
-		font-size: 0.8125rem;
+		font-size: 13px;
 		white-space: nowrap;
 		cursor: pointer;
 	}
-
 	.shift-warning-link:hover {
-		text-decoration: underline;
+		color: var(--color-mustard-deep);
 	}
 
-	.pos-grid {
+	/* Two-panel layout */
+	.pos {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
-		padding: 16px;
+		min-height: 0;
 		padding-bottom: 88px; /* room for the mobile cart bar */
 	}
 
-	.menu-panel {
+	.pos__catalog {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 20px 22px;
+		min-width: 0;
+	}
+
+	.pos__cat-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+	}
+
+	.searchbox {
+		display: flex;
+		align-items: center;
+		gap: 9px;
 		flex: 1;
+		max-width: 360px;
+		padding: 11px 14px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-line-2);
+		border-radius: 11px;
+		color: var(--color-text-dim);
+	}
+	.searchbox input {
+		flex: 1;
+		min-width: 0;
+		background: none;
+		border: none;
+		outline: none;
+		color: var(--color-text);
+		font-family: var(--font-sans);
+		font-size: 14px;
+	}
+	.searchbox input::placeholder {
+		color: var(--color-text-faint);
 	}
 
-	@media (min-width: 768px) {
-		.pos-grid {
-			flex-direction: row;
-			align-items: flex-start;
-			padding-bottom: 16px;
-			height: calc(100vh - 0px);
-		}
-		.menu-panel {
-			flex: 0 0 60%;
-			max-width: 60%;
-			overflow-y: auto;
-			max-height: calc(100vh - 32px);
-		}
-		.cart-panel {
-			flex: 0 0 40%;
-			max-width: 40%;
-			position: sticky;
-			top: 16px;
-			max-height: calc(100vh - 32px);
-			background: var(--color-surface-raised);
-			border-radius: var(--radius-lg);
-			box-shadow:
-				0 1px 3px rgba(0, 0, 0, 0.1),
-				0 1px 2px rgba(0, 0, 0, 0.06);
-			padding: 16px;
-		}
+	.pos__count {
+		font-size: 12.5px;
+		color: var(--color-text-faint);
+		font-weight: 600;
+		white-space: nowrap;
 	}
 
-	/* Category pills */
-	.pills {
-		scrollbar-width: none;
+	.tabs {
+		display: flex;
+		gap: 9px;
+		flex-wrap: wrap;
 	}
-	.pills::-webkit-scrollbar {
-		display: none;
-	}
+
 	.pill {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		flex: 0 0 auto;
+		gap: 7px;
 		min-height: 48px;
-		padding: 0 16px;
-		border: 2px solid var(--color-surface-overlay);
-		border-radius: var(--radius-full);
-		background: var(--color-surface-raised);
-		color: var(--color-text-secondary);
+		padding: 9px 16px;
+		border: 1px solid var(--color-line);
+		border-radius: 9999px;
+		background: var(--color-surface-2);
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
-		font-weight: 600;
-		font-size: 0.9375rem;
+		font-weight: 700;
+		font-size: 13.5px;
 		white-space: nowrap;
 		cursor: pointer;
 		transition:
 			background 150ms ease,
 			color 150ms ease,
-			border-color 150ms ease,
-			transform 150ms ease;
+			border-color 150ms ease;
 	}
-	.pill:active {
-		transform: scale(0.96);
+	.pill:hover {
+		color: var(--color-text);
+		border-color: var(--color-line-2);
 	}
-	.pill.selected {
-		border-color: var(--pill-color, var(--color-accent));
-		background: var(--pill-color, var(--color-accent));
+	.pill--on {
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
+		border-color: var(--color-mustard);
 	}
 
-	/* Cart inner */
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+		gap: 14px;
+	}
+
+	/* Cart panel */
+	.pos__cart {
+		padding: 18px 18px 0;
+		background: var(--color-surface);
+	}
+
 	.cart-inner {
-		min-height: 0;
-	}
-
-	.customer-btn {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 2px;
+		min-height: 0;
+		height: 100%;
+	}
+
+	.clientrow {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
 		min-height: 48px;
-		padding: 8px 12px;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
+		padding: 13px 14px;
+		margin: 12px 0 14px;
+		border: 1px solid var(--color-line);
+		border-radius: 11px;
+		background: var(--color-surface-2);
+		color: var(--color-text);
 		font-family: var(--font-sans);
-		text-align: left;
 		cursor: pointer;
-		transition:
-			border-color 150ms ease,
-			transform 150ms ease;
+		transition: border-color 150ms ease;
 	}
-	.customer-btn:active {
-		transform: scale(0.98);
+	.clientrow:hover {
+		border-color: var(--color-line-2);
 	}
-	.customer-btn-label {
-		font-size: 12px;
+	.clientrow__l {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--color-text-dim);
+		font-size: 13px;
 		font-weight: 600;
-		color: var(--color-text-muted);
 	}
-	.customer-btn-value {
-		font-weight: 600;
-		color: var(--color-text-primary);
+	.clientrow__v {
+		margin-left: auto;
+		font-weight: 700;
+		font-size: 14px;
 	}
 
 	.cart-lines {
+		flex: 1;
 		min-height: 120px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
 	}
 
 	/* Totals */
-	.totals-box {
-		padding: 12px;
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
+	.cart-foot {
+		border-top: 1px solid var(--color-line);
+		padding-top: 15px;
+		margin-top: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
 	}
-	.total-row {
+	.totals {
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+	}
+	.totals__row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 14px;
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
 	}
-	.total-label {
-		color: var(--color-text-secondary);
-		font-size: 0.9375rem;
-	}
-	.total-val {
-		font-family: var(--font-mono);
+	.totals__row--disc {
+		color: var(--color-green);
 		font-weight: 600;
-		color: var(--color-text-primary);
 	}
-	.total-row.grand {
-		margin-top: 4px;
-		padding-top: 8px;
-		border-top: 1px solid var(--color-surface-overlay);
+	.totals__row--grand {
+		align-items: flex-end;
+		border-top: 1px solid var(--color-line);
+		padding-top: 13px;
+		margin-top: 2px;
 	}
-	.total-row.grand .total-label {
-		font-size: 1.0625rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+	.totals__row--grand > span {
+		font-size: 18px;
+		font-weight: 800;
+		color: var(--color-text);
 	}
-	.total-row.grand .total-val {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: var(--color-accent);
+	.totals__amt {
+		text-align: right;
+		display: flex;
+		flex-direction: column;
 	}
-	.rate-badge {
+	.totals__usd {
+		font-size: 27px;
+		font-weight: 800;
+		color: var(--color-mustard);
+		letter-spacing: -0.025em;
+		line-height: 1;
+	}
+	.totals__bs {
 		font-size: 12px;
-		color: var(--color-text-muted);
-		font-family: var(--font-sans);
-	}
-	.bs-val {
-		font-family: var(--font-mono);
-		font-size: 0.875rem;
-		color: var(--color-text-secondary);
+		color: var(--color-text-faint);
+		margin-top: 4px;
 	}
 
-	.section-label {
+	.paysec__l {
 		font-size: 13px;
+		color: var(--color-text-dim);
 		font-weight: 600;
-		color: var(--color-text-secondary);
-		font-family: var(--font-sans);
+		display: block;
+		margin-bottom: 9px;
 	}
 
 	.cart-actions {
-		padding-top: 4px;
+		position: sticky;
+		bottom: 0;
+		background: var(--color-surface);
+		padding: 14px 0 18px;
+		margin-top: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.cart-actions::before {
+		content: '';
+		position: absolute;
+		top: -22px;
+		left: 0;
+		right: 0;
+		height: 22px;
+		background: linear-gradient(to top, var(--color-surface), transparent);
+		pointer-events: none;
+	}
+	.cart-actions__row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+
+	/* Desktop two-panel grid */
+	@media (min-width: 768px) {
+		.pos {
+			display: grid;
+			grid-template-columns: 1fr clamp(360px, 34%, 440px);
+			align-items: start;
+			padding-bottom: 0;
+		}
+		.pos__catalog {
+			min-height: 0;
+		}
+		.pos__cart {
+			position: sticky;
+			top: 0;
+			max-height: calc(100vh - 70px);
+			overflow-y: auto;
+			border-left: 1px solid var(--color-line);
+		}
 	}
 
 	/* Mobile sticky cart bar */
@@ -790,13 +924,11 @@
 		position: fixed;
 		left: 0;
 		right: 0;
-		bottom: 0;
-		z-index: 40;
+		bottom: 66px;
+		z-index: 30;
 		padding: 8px 12px;
-		background: var(--color-surface-raised);
-		box-shadow:
-			0 -4px 6px rgba(0, 0, 0, 0.1),
-			0 -2px 4px rgba(0, 0, 0, 0.06);
+		background: var(--color-surface);
+		border-top: 1px solid var(--color-line);
 	}
 	.cart-bar-btn {
 		display: flex;
@@ -806,11 +938,11 @@
 		min-height: 56px;
 		padding: 0 16px;
 		border: none;
-		border-radius: var(--radius-md);
-		background: var(--color-accent);
+		border-radius: 13px;
+		background: var(--color-mustard);
 		color: var(--color-accent-fg);
 		font-family: var(--font-sans);
-		font-weight: 700;
+		font-weight: 800;
 		cursor: pointer;
 		transition: transform 150ms ease;
 	}
@@ -824,23 +956,22 @@
 		min-width: 28px;
 		height: 28px;
 		padding: 0 8px;
-		border-radius: var(--radius-full);
-		background: var(--color-secondary);
-		color: var(--color-secondary-fg);
-		font-family: var(--font-mono);
+		border-radius: 9999px;
+		background: rgba(0, 0, 0, 0.18);
 		font-size: 0.875rem;
 	}
 	.cart-bar-total {
 		margin-left: auto;
-		font-family: var(--font-mono);
 		font-size: 1.0625rem;
 	}
 	.cart-bar-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
 		font-size: 0.9375rem;
-		opacity: 0.9;
 	}
 
-	/* Customer rows */
+	/* Customer rows (picker modal) */
 	.customer-row {
 		display: flex;
 		flex-direction: column;
@@ -848,33 +979,31 @@
 		gap: 2px;
 		width: 100%;
 		min-height: 48px;
-		padding: 10px 12px;
-		border: 1px solid var(--color-surface-overlay);
-		border-radius: var(--radius-md);
-		background: var(--color-surface-base);
+		padding: 12px 14px;
+		border: 1px solid var(--color-line);
+		border-radius: 11px;
+		background: var(--color-surface-2);
 		font-family: var(--font-sans);
 		text-align: left;
 		cursor: pointer;
-		transition:
-			background 150ms ease,
-			transform 150ms ease;
+		transition: border-color 150ms ease;
 	}
-	.customer-row:active {
-		transform: scale(0.98);
+	.customer-row:hover {
+		border-color: var(--color-line-2);
 	}
 	.customer-name {
-		font-weight: 600;
-		color: var(--color-text-primary);
+		font-weight: 700;
+		color: var(--color-text);
 	}
 	.customer-sub {
 		font-size: 13px;
-		color: var(--color-text-muted);
+		color: var(--color-text-faint);
 	}
 
 	/* Override modal */
 	.override-msg {
 		margin: 0 0 16px 0;
-		color: var(--color-text-secondary);
+		color: var(--color-text-dim);
 		font-family: var(--font-sans);
 		line-height: 1.5;
 	}
@@ -903,11 +1032,10 @@
 		align-items: center;
 		gap: 8px;
 		padding: 32px 40px;
-		border-radius: var(--radius-xl);
-		background: var(--color-surface-raised);
-		box-shadow:
-			0 10px 20px rgba(0, 0, 0, 0.12),
-			0 4px 8px rgba(0, 0, 0, 0.08);
+		border-radius: var(--r-card);
+		background: var(--color-surface);
+		border: 1px solid var(--color-line);
+		box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.8);
 		font-family: var(--font-sans);
 		animation: pop 200ms ease;
 	}
@@ -918,22 +1046,19 @@
 		width: 72px;
 		height: 72px;
 		border-radius: var(--radius-full);
-		background: var(--color-success);
+		background: var(--color-green);
 		color: var(--color-success-fg);
-		font-size: 40px;
-		font-weight: 700;
 	}
 	.success-title {
 		margin: 8px 0 0 0;
 		font-size: 1.125rem;
-		font-weight: 700;
-		color: var(--color-text-primary);
+		font-weight: 800;
+		color: var(--color-text);
 	}
 	.success-number {
 		margin: 0;
-		font-family: var(--font-mono);
-		font-weight: 600;
-		color: var(--color-text-secondary);
+		font-weight: 700;
+		color: var(--color-text-faint);
 	}
 
 	@keyframes fade-in {
