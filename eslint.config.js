@@ -11,6 +11,10 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	// Supabase Edge Functions are Deno (URL imports, Deno globals, service-role
+	// `any` rows) — a separate runtime from the SvelteKit app. Lint them with
+	// Deno's own tooling, not the Node/TS-ESLint config here.
+	{ ignores: ['supabase/functions/**'] },
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,

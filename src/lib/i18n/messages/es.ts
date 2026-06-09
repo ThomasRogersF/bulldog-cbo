@@ -355,6 +355,8 @@ export const es = {
 		paymentRegistered: 'Pago registrado',
 		rateUpdated: 'Tasa actualizada',
 		testSent: 'Mensaje de prueba enviado',
+		testFailed: 'No se pudo enviar el mensaje de prueba',
+		telegramNotConfigured: 'Configura el token y el chat ID primero',
 		loginFailed: 'No se pudo iniciar sesión',
 		signedOut: 'Sesión cerrada'
 	},

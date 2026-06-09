@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { settingsDb } from '$lib/db';
+	import { settingsDb, notificationsDb } from '$lib/db';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { t } from '$lib/i18n';
 	import { formatDateTime } from '$lib/utils/format';
@@ -23,6 +23,7 @@
 	let telegramChatId = $state('');
 	let savingBotToken = $state(false);
 	let savingChatId = $state(false);
+	let testing = $state(false);
 
 	// Alerts
 	let alerts = $state<Record<AlertKey, boolean>>({
@@ -135,8 +136,20 @@
 		}
 	}
 
-	function sendTestMessage(): void {
-		toast.success(t('toasts.testSent'));
+	async function sendTestMessage(): Promise<void> {
+		if (!telegramBotToken || !telegramChatId) {
+			toast.error(t('toasts.telegramNotConfigured'));
+			return;
+		}
+		testing = true;
+		try {
+			await notificationsDb.test();
+			toast.success(t('toasts.testSent'));
+		} catch {
+			toast.error(t('toasts.testFailed'));
+		} finally {
+			testing = false;
+		}
 	}
 
 	async function toggleAlert(key: AlertKey): Promise<void> {
@@ -252,7 +265,7 @@
 					</div>
 
 					<div class="self-start">
-						<Button variant="ghost" onclick={sendTestMessage}>
+						<Button variant="ghost" onclick={sendTestMessage} loading={testing}>
 							{t('settings.testMessage')}
 						</Button>
 					</div>

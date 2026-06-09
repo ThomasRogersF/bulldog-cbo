@@ -51,3 +51,58 @@ RLS requires an existing owner to manage profiles, and `profiles.id` references
 - PART 17 grants the Data API roles explicitly — Supabase cloud no longer
   auto-exposes new objects (default flipped 2026-05-30). `anon` is intentionally
   left ungranted (auth-only app).
+
+---
+
+# Telegram Edge Functions
+
+All Telegram notification logic lives server-side in `supabase/functions/` so the
+bot token and the service-role key never reach the browser. The frontend only
+fires fire-and-forget triggers (via `notificationsDb` in `src/lib/db.ts`); a
+Telegram failure NEVER blocks the UI or fails an order — it only logs a
+`console.warn`.
+
+## The functions
+
+| Function              | Trigger                                                                 | Sends                                                                                                     |
+| --------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `notify-shift-opened` | A shift opens (also the Settings "send test" button, with `_test:true`) | "🟢 Turno abierto" — or a connection-test message                                                         |
+| `notify-shift-closed` | A shift closes                                                          | "📊 Reporte de cierre" — full daily report (sales, payment-method breakdown, top products, cash variance) |
+| `notify-low-stock`    | After every order confirm                                               | One batched "⚠️ Alerta de stock" listing every ingredient at/below `min_stock` (skips if none)            |
+| `notify-large-sale`   | After every order confirm                                               | "💰 Venta grande" when the order total ≥ `large_sale_threshold` (default $20)                             |
+| `notify-override`     | After confirming an order with a zero-stock override item               | "⚠️ Venta sin stock" with item + note                                                                     |
+
+`_shared/` holds the common code (Telegram sender, service-role client, report
+builder, CORS helpers). The leading underscore keeps Supabase from treating it as
+a deployable function.
+
+## Configuration
+
+Everything is configured from the in-app **Settings → Notificaciones Telegram**
+screen (no env vars): the bot token, the chat id, the per-event alert toggles, and
+the large-sale threshold are stored as rows in the `settings` table and read by the
+functions at call time. Use the **"Enviar mensaje de prueba"** button to verify the
+token + chat id (it sends regardless of the toggles).
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically by the
+Supabase Edge runtime — no manual secret setup is needed.
+
+## CORS
+
+The app is a SPA, so `supabase.functions.invoke()` runs in the browser and is
+cross-origin → the browser sends a CORS preflight `OPTIONS`. Every function answers
+`OPTIONS` and echoes CORS headers on all responses (`_shared/cors.ts`). Functions
+keep the default `verify_jwt = true`, so only authenticated app users can invoke
+them (the owner's Telegram can't be spammed via the public anon key).
+
+## Deploy
+
+```
+npx supabase functions deploy notify-shift-opened --project-ref obbtmocyuqcblvlasini
+npx supabase functions deploy notify-shift-closed --project-ref obbtmocyuqcblvlasini
+npx supabase functions deploy notify-low-stock    --project-ref obbtmocyuqcblvlasini
+npx supabase functions deploy notify-large-sale   --project-ref obbtmocyuqcblvlasini
+npx supabase functions deploy notify-override     --project-ref obbtmocyuqcblvlasini
+```
+
+Deployment requires an active `npx supabase login`.

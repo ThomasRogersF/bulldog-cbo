@@ -9,7 +9,15 @@
 		CustomerStats,
 		OrderWithItems
 	} from '$lib/types';
-	import { menuDb, ingredientsDb, ordersDb, customersDb, settingsDb } from '$lib/db';
+	import {
+		menuDb,
+		ingredientsDb,
+		ordersDb,
+		customersDb,
+		settingsDb,
+		notificationsDb
+	} from '$lib/db';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { t } from '$lib/i18n';
 	import { formatUsd, formatBs } from '$lib/utils/format';
 	import { toLineInputs } from '$lib/domain/cart';
@@ -254,6 +262,7 @@
 		submitting = true;
 		try {
 			let orderNumber: number;
+			let confirmedId: string;
 			if (cartStore.orderId === null) {
 				const order = await ordersDb.create({
 					orderType: cartStore.orderType,
@@ -266,12 +275,29 @@
 					discountUsd: cartStore.discount
 				});
 				orderNumber = confirmed.order_number;
+				confirmedId = confirmed.id;
 			} else {
 				const confirmed = await ordersDb.confirm(cartStore.orderId, {
 					method: payment,
 					discountUsd: cartStore.discount
 				});
 				orderNumber = confirmed.order_number;
+				confirmedId = confirmed.id;
+			}
+			// Fire-and-forget Telegram triggers — built synchronously here (the cart
+			// clears 2s later) and never awaited, so they cannot block or fail the order.
+			notificationsDb.lowStock(confirmedId).catch(() => {});
+			notificationsDb.largeSale(confirmedId).catch(() => {});
+			const overrideItem = cartStore.items.find((i) => !!i.overrideReason);
+			if (overrideItem) {
+				notificationsDb
+					.override({
+						orderId: confirmedId,
+						itemName: overrideItem.menuItem.name,
+						workerName: authStore.profile?.full_name ?? '',
+						note: overrideItem.overrideReason ?? ''
+					})
+					.catch(() => {});
 			}
 			toast.success(t('toasts.orderConfirmed'));
 			successOrderNumber = orderNumber;

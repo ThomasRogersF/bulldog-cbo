@@ -3,6 +3,38 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.6] — 2026-06-09
+
+Telegram notification system — owner push alerts via Supabase Edge Functions.
+
+- **Edge Functions (`supabase/functions/`):** five Deno functions — `notify-shift-opened`,
+  `notify-shift-closed` (full daily closing report: sales, payment-method breakdown,
+  top products, cash variance), `notify-low-stock` (one batched alert for every
+  ingredient at/below `min_stock`), `notify-large-sale` (order total ≥ threshold),
+  and `notify-override` (zero-stock sale). Shared code in `_shared/`
+  (`telegram.ts` sender, `supabase.ts` service-role client + config loader,
+  `report.ts` builder, `cors.ts`). All logic is server-side; the bot token and
+  service-role key never reach the browser. Each function reads its alert toggle
+  from `settings` and short-circuits when disabled.
+- **Frontend triggers (`notificationsDb` in `src/lib/db.ts`):** thin wrappers over
+  `supabase.functions.invoke`. Wired fire-and-forget (never awaited, `.catch(() => {})`)
+  from `stores/shift.svelte.ts` (open/close) and `routes/pos/+page.svelte`
+  `confirmOrder()` (low-stock + large-sale always, override when an item carries an
+  `overrideReason`). A Telegram failure only `console.warn`s — it can never block the
+  UI or fail an order.
+- **Settings:** wired the previously-stubbed "Enviar mensaje de prueba" button to a
+  real async handler (`notificationsDb.test()` → `notify-shift-opened` with `_test:true`,
+  which bypasses the shift-alerts toggle); added `toasts.testFailed` /
+  `toasts.telegramNotConfigured` i18n keys.
+- **Spec corrections (by design):** added CORS preflight handling (browser
+  `functions.invoke` is cross-origin and would otherwise be blocked); the closing
+  report sums Bs from `orders.total_bs`/`orders.usd_rate_used` (the USD rate lives on
+  `orders`, not `shifts`); routed the test call through `db.ts` rather than importing
+  supabase into a component (CLAUDE.md); and excluded `supabase/functions/**` from
+  eslint/prettier (Deno runtime — linted with `deno`, not the SvelteKit toolchain).
+- No schema change: all seven `telegram_*`/`*_alerts`/`large_sale_threshold` settings
+  rows already exist, and service-role functions bypass RLS.
+
 ## [unreleased] — 2026-06-08
 
 Bulldog CBO brand design system — a visual-only redesign (no business-logic,

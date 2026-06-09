@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Supabase Edge Functions (Deno — formatted with `deno fmt`, not prettier)
+/supabase/functions/

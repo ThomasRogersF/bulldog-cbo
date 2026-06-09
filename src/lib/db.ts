@@ -1121,4 +1121,73 @@ export const settingsDb = {
 	}
 };
 
+// ── Telegram notifications ───────────────────────────────────────────────────
+// Thin wrappers over Supabase Edge Functions. All notification logic (token,
+// chat id, alert toggles, message building) lives server-side in the functions —
+// the frontend only fires these triggers. Callers must treat every call as
+// fire-and-forget (.catch(() => {})): a Telegram failure must NEVER block the UI
+// or fail an order. These wrappers log a warning but never throw.
+export const notificationsDb = {
+	async shiftOpened(data: {
+		shiftId: string;
+		shiftNumber: number;
+		workerName: string;
+		openedAt: string;
+	}) {
+		const { data: result, error } = await supabase.functions.invoke('notify-shift-opened', {
+			body: data
+		});
+		if (error) console.warn('Telegram shift-opened failed:', error);
+		return result;
+	},
+
+	async shiftClosed(shiftId: string) {
+		const { data: result, error } = await supabase.functions.invoke('notify-shift-closed', {
+			body: { shiftId }
+		});
+		if (error) console.warn('Telegram shift-closed failed:', error);
+		return result;
+	},
+
+	async lowStock(orderId: string) {
+		const { data: result, error } = await supabase.functions.invoke('notify-low-stock', {
+			body: { orderId }
+		});
+		if (error) console.warn('Telegram low-stock failed:', error);
+		return result;
+	},
+
+	async largeSale(orderId: string) {
+		const { data: result, error } = await supabase.functions.invoke('notify-large-sale', {
+			body: { orderId }
+		});
+		if (error) console.warn('Telegram large-sale failed:', error);
+		return result;
+	},
+
+	async override(data: { orderId: string; itemName: string; workerName: string; note: string }) {
+		const { data: result, error } = await supabase.functions.invoke('notify-override', {
+			body: data
+		});
+		if (error) console.warn('Telegram override failed:', error);
+		return result;
+	},
+
+	// Settings "send test message" — reuses notify-shift-opened with _test:true,
+	// which bypasses the shift_alerts toggle and sends a confirmation message.
+	async test() {
+		const { data: result, error } = await supabase.functions.invoke('notify-shift-opened', {
+			body: {
+				_test: true,
+				shiftId: '00000000-0000-0000-0000-000000000000',
+				shiftNumber: 0,
+				workerName: 'Prueba',
+				openedAt: nowIso()
+			}
+		});
+		if (error) throw error;
+		return result;
+	}
+};
+
 export type { Setting };

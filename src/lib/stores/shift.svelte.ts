@@ -1,5 +1,6 @@
 // Active-shift state — loaded on mount and refreshed on open/close + realtime.
-import { shiftsDb } from '$lib/db';
+import { shiftsDb, notificationsDb } from '$lib/db';
+import { authStore } from '$lib/stores/auth.svelte';
 import type { ActiveShift } from '$lib/types';
 
 export const shiftStore = $state({
@@ -17,13 +18,24 @@ export async function loadActiveShift(): Promise<void> {
 }
 
 export async function openShift(openingCash: number, notes?: string): Promise<void> {
-	await shiftsDb.open(openingCash, notes);
+	const created = await shiftsDb.open(openingCash, notes);
 	await loadActiveShift();
+	// Fire-and-forget Telegram notification — never blocks the UI.
+	notificationsDb
+		.shiftOpened({
+			shiftId: created.id,
+			shiftNumber: created.shift_number,
+			workerName: authStore.profile?.full_name ?? '',
+			openedAt: created.opened_at
+		})
+		.catch(() => {});
 }
 
 export async function closeShift(id: string, closingCash: number, notes?: string): Promise<void> {
 	await shiftsDb.close(id, { closingCashUsd: closingCash, notes });
 	await loadActiveShift();
+	// Fire-and-forget Telegram closing report — never blocks the UI.
+	notificationsDb.shiftClosed(id).catch(() => {});
 }
 
 export function hasOpenShift(): boolean {
