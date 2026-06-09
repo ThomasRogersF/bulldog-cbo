@@ -596,7 +596,7 @@
 		{/if}
 
 		<!-- Actions -->
-		<div class="cart-actions">
+		<div class="cart-actions pb-20 lg:pb-[18px]">
 			<Button
 				size="lg"
 				full
@@ -903,7 +903,10 @@
 		position: sticky;
 		bottom: 0;
 		background: var(--color-surface);
-		padding: 14px 0 18px;
+		/* padding-bottom is set by the `pb-20 lg:pb-[18px]` utilities so the confirm button
+		   clears the 66px mobile bottom nav; 18px is the original desktop value. */
+		padding-top: 14px;
+		padding-inline: 0;
 		margin-top: 16px;
 		display: flex;
 		flex-direction: column;

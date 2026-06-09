@@ -104,7 +104,7 @@
 </aside>
 
 <!-- MOBILE BOTTOM NAV -->
-<nav class="mobilenav lg:hidden" aria-label="Principal">
+<nav class="mobilenav flex lg:hidden" aria-label="Principal">
 	{#each primaryItems as item (item.href)}
 		<button
 			type="button"
@@ -350,7 +350,8 @@
 		right: 0;
 		bottom: 0;
 		z-index: 40;
-		display: flex;
+		/* display is set by the `flex lg:hidden` utilities so `lg:hidden` can win at ≥1024px
+		   (a scoped `display: flex` here would out-specify the utility and never hide). */
 		height: 66px;
 		background: color-mix(in srgb, var(--color-surface) 94%, transparent);
 		backdrop-filter: blur(14px);

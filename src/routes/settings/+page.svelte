@@ -205,7 +205,7 @@
 	}
 </script>
 
-<div class="page mx-auto w-full max-w-3xl px-4 py-6">
+<div class="page mx-auto w-full max-w-3xl px-4 pt-6 lg:pb-6">
 	{#if loading}
 		<div class="flex justify-center py-16">
 			<LoadingSpinner size="lg" />

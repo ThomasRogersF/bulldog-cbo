@@ -3,6 +3,31 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.7] — 2026-06-09
+
+Bottom-nav layout fixes — overlap and sidebar/bottom-nav mutual exclusivity.
+
+- **Mutual exclusivity (`NavBar.svelte`):** the mobile bottom nav now uses
+  `flex lg:hidden` and its scoped `.mobilenav` rule no longer declares
+  `display: flex`. A scoped `display` (specificity ~0,2,0) was out-specifying the
+  global `lg:hidden` utility (~0,1,0), so the 66px bottom nav stayed visible at
+  ≥1024px and rendered alongside the desktop sidebar. Display is now governed only
+  by the `flex`/`lg:hidden` utilities, so the two are mutually exclusive (sidebar
+  ≥1024px, bottom nav <1024px). The sidebar (`hidden lg:flex`) was already correct.
+- **Content clearance (`+layout.svelte`):** the scrollable `.content` container now
+  carries `pb-20 lg:pb-0` (80px bottom on mobile to clear the 66px nav with breathing
+  room, 0 on desktop), replacing the cramped `@media(max-width:1023px){padding-bottom:70px}`
+  (which also out-specified the utility). Per-screen redundant bottom padding trimmed
+  so it no longer double-stacks with the layout: `shifts`/`settings` `py-6 → pt-6 lg:pb-6`;
+  `dashboard` mobile `.page` bottom `80px → 24px`. `ingredients` keeps `90px` (needed to
+  clear its fixed FAB at `bottom:88px`).
+- **POS (`pos/+page.svelte`):** the sticky `.cart-actions` got `pb-20 lg:pb-[18px]`
+  (80px on mobile so the confirm button clears the nav, 18px desktop as before); its
+  CSS shorthand became `padding-top:14px; padding-inline:0` so the utility owns the
+  bottom padding.
+- **Z-index (`Modal.svelte`):** `.modal` made explicit `z-index: 50` (above the z-40
+  nav). `BottomSheet` (`.sheet-root`) was already `z-index: 50`.
+
 ## [0.0.6] — 2026-06-09
 
 Telegram notification system — owner push alerts via Supabase Edge Functions.

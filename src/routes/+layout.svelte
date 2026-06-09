@@ -84,7 +84,7 @@
 		<NavBar />
 		<div class="main">
 			<TopBar />
-			<div class="content">
+			<div class="content pb-20 lg:pb-0">
 				{@render children()}
 			</div>
 		</div>
@@ -123,12 +123,6 @@
 	@media (min-width: 1024px) {
 		.main {
 			margin-left: 250px;
-		}
-	}
-
-	@media (max-width: 1023px) {
-		.content {
-			padding-bottom: 70px;
 		}
 	}
 </style>

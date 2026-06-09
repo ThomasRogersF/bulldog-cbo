@@ -225,7 +225,7 @@
 	}
 </script>
 
-<div class="page mx-auto w-full max-w-2xl px-4 py-6 flex flex-col gap-6">
+<div class="page mx-auto w-full max-w-2xl px-4 pt-6 lg:pb-6 flex flex-col gap-6">
 	{#if shiftStore.loading && !shiftStore.active}
 		<div class="flex justify-center py-12">
 			<LoadingSpinner size="lg" />

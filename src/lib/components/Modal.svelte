@@ -51,6 +51,9 @@
 <style>
 	.modal {
 		padding: 0;
+		/* Above the z-40 bottom nav (the native top-layer dialog already wins, but keep
+		   the z-index explicit so the intent survives any future markup change). */
+		z-index: 50;
 		border: 1px solid var(--color-line);
 		width: 92vw;
 		max-width: 480px;

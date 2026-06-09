@@ -708,7 +708,9 @@
 	}
 	@media (max-width: 640px) {
 		.page {
-			padding: 18px 16px 80px;
+			/* Bottom nav clearance is owned by the layout's `.content` (pb-20); keep only
+			   normal page spacing here so the two don't stack into excess whitespace. */
+			padding: 18px 16px 24px;
 		}
 		.kpi-row {
 			grid-template-columns: 1fr 1fr;
