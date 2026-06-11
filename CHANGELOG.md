@@ -3,6 +3,30 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.8] — 2026-06-10
+
+Playwright end-to-end test suite — auth, navigation, shifts, POS, ingredients,
+dashboard and mobile-layout coverage against the local dev server + real Supabase.
+
+- **Suite (`e2e/`):** seven specs — `auth` (login, bad-credentials banner, redirect
+  guards), `navigation` (every route's `h1` title + sidebar/bottom-nav breakpoints),
+  `shifts` (open → topbar badge → close), `pos` (menu loads, category filter, add to
+  cart, full order confirm, empty-cart disabled), `ingredients` (stock cards,
+  movimientos tab, restock modal), `dashboard` (KPIs, chart, top products), and
+  `mobile` (390px bottom nav + cart-bar/nav non-overlap). Selectors were mapped
+  against the real DOM and resolved i18n strings rather than guessed.
+- **Auth via `storageState` (`auth.setup.ts` + `playwright.config.ts`):** a `setup`
+  project logs in once and persists the Supabase session; all test projects reuse it.
+  Per-test UI login would issue ~30 `signInWithPassword` calls per run and trip
+  Supabase's auth rate limit — reuse cuts that to one. `auth.spec.ts` overrides with an
+  empty `storageState` so it can exercise the logged-out flows.
+- **Config:** `playwright.config.ts` (sequential, `workers: 1` for shared Supabase
+  state, auto-starts `npm run dev`), `e2e/.env.test` for credentials (gitignored),
+  `test:e2e` / `:ui` / `:debug` scripts, and a Testing section in `supabase/README.md`.
+- **App tweaks surfaced by the tests:** `Input.svelte` now auto-generates an `id`
+  (`$props.id()`) so its `<label for>` always associates with the input, making
+  `getByLabel()` reliable across forms; `app.html` gained a `<title>Bulldog CBO`.
+
 ## [0.0.7] — 2026-06-09
 
 Bottom-nav layout fixes — overlap and sidebar/bottom-nav mutual exclusivity.

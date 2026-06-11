@@ -106,3 +106,38 @@ npx supabase functions deploy notify-override     --project-ref obbtmocyuqcblvla
 ```
 
 Deployment requires an active `npx supabase login`.
+
+---
+
+# E2E Testing (Playwright)
+
+Tests run against the local dev server with a real Supabase connection.
+
+## Setup
+
+1. Copy `e2e/.env.test` and fill in real credentials
+2. Ensure the owner account exists (run `scripts/bootstrap.mjs` if needed)
+
+## Run
+
+```bash
+npm run test:e2e           # headless
+npm run test:e2e:ui        # interactive UI mode
+npm run test:e2e:debug     # step through tests
+```
+
+## Test suites
+
+- `auth.spec.ts` — login, logout, redirect guards
+- `navigation.spec.ts` — all routes load, sidebar/bottom-nav breakpoints
+- `shifts.spec.ts` — open shift, topbar badge, close shift
+- `pos.spec.ts` — menu loads, add to cart, complete order
+- `ingredients.spec.ts` — stock tab, movements tab, restock modal
+- `dashboard.spec.ts` — KPIs, chart, top products
+- `mobile.spec.ts` — 390px layout, bottom nav overlap
+
+## Notes
+
+- Tests are sequential (`workers: 1`) — shared Supabase state
+- Each test that opens a shift cleans up after itself
+- Never hardcode credentials — use `e2e/.env.test`

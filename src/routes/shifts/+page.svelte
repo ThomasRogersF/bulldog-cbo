@@ -89,9 +89,12 @@
 	});
 
 	// Cash-count variance for the close modal — recomputes live as the worker types.
-	const countedCash = $derived(parseFloat(closingCash));
+	// The counted-cash Input has type="number", so Svelte coerces its bound value to
+	// a number (or null) on input — normalise to a string before any string ops.
+	const closingCashText = $derived(String(closingCash ?? ''));
+	const countedCash = $derived(parseFloat(closingCashText));
 	const hasCount = $derived(
-		closingCash.trim() !== '' && !Number.isNaN(countedCash) && countedCash >= 0
+		closingCashText.trim() !== '' && !Number.isNaN(countedCash) && countedCash >= 0
 	);
 	const varianceAmount = $derived(hasCount ? countedCash - expectedCash : 0);
 	const varianceKind = $derived.by(() => {

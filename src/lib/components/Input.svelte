@@ -22,14 +22,18 @@
 		id?: string;
 		oninput?: (e: Event) => void;
 	} = $props();
+
+	// Inputs must always have an id so the label is associated (a11y + testability).
+	const uid = $props.id();
+	const inputId = $derived(id ?? uid);
 </script>
 
 <div class="flex flex-col gap-1.5 w-full">
 	{#if label}
-		<label class="field-label" for={id}>{label}</label>
+		<label class="field-label" for={inputId}>{label}</label>
 	{/if}
 	<input
-		{id}
+		id={inputId}
 		{type}
 		{placeholder}
 		{disabled}
