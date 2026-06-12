@@ -28,3 +28,6 @@ vite.config.ts.timestamp-*
 e2e/.env.test
 e2e/.auth/
 
+# Claude Code runtime
+.claude/scheduled_tasks.lock
+

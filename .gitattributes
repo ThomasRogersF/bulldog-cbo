@@ -1,0 +1,17 @@
+# Normalise line endings: store text files as LF in the repo and check them out
+# as LF everywhere, so editors/formatters on Windows stop producing CRLF-only
+# "changes". Matches Prettier's default endOfLine: lf.
+* text=auto eol=lf
+
+# Binary assets — never normalise or diff.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
