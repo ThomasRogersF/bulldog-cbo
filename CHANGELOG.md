@@ -3,6 +3,38 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.0.9] — 2026-06-12
+
+Progressive Web App — installable on mobile and desktop with offline app-shell
+caching.
+
+- **Service worker + manifest (`vite.config.ts`):** added `vite-plugin-pwa` via
+  `@vite-pwa/sveltekit` (`registerType: 'autoUpdate'`). The generated
+  `manifest.webmanifest` carries the full Bulldog icon set (72→512 + maskable),
+  `#100F0D` theme/background and `display: standalone`. Workbox precaches the app
+  shell (`js,css,html,svg,png,ico,woff,woff2`) with `navigateFallback: '/'`, while
+  every `*.supabase.co` request is forced `NetworkOnly` so live data never serves
+  stale. The PWA plugin is merged alongside the existing Vitest projects.
+- **Real icons (`static/icons/`):** replaced the red placeholder icons with the
+  brand icon set (favicon.ico, 16→512 PNGs, maskable 192/512, apple-touch 180).
+  Removed `static/{manifest.json,icon-192.png,icon-512.png,favicon.svg,favicon.ico}`
+  and the now-obsolete `scripts/gen-icons.mjs`.
+- **Manifest link + SW registration (`app.html` + `+layout.svelte`):** `@vite-pwa/sveltekit`
+  does not inject into SvelteKit's SSR app.html, so the `<link rel="manifest">` is added
+  manually and the service worker is registered via `virtual:pwa-register`
+  (`registerSW({ immediate: true })`).
+- **iOS standalone (`app.html`, `TopBar`, `NavBar`, `InstallPrompt`):** kept the iOS-only
+  meta tags and `apple-touch-icon` (`/icons/icon-180.png`) since iOS ignores the manifest
+  for the home-screen icon. `apple-mobile-web-app-status-bar-style` is `black-translucent`
+  with `viewport-fit=cover`, and the top bar / bottom nav / install banner pad for
+  `env(safe-area-inset-*)` so the status bar and home indicator never overlap content.
+- **Install prompt (`InstallPrompt.svelte` + `stores/install.svelte.ts`):** a
+  dismissible banner offering one-tap install on Android/desktop
+  (`beforeinstallprompt`) or "add to home screen" steps on iOS. Shows once per
+  session (sessionStorage); mounted in `+layout.svelte` only when authenticated.
+- **Settings → Acerca de:** app version (from `package.json`) plus a "Cómo instalar
+  la app" button that re-shows the install banner.
+
 ## [0.0.8] — 2026-06-10
 
 Playwright end-to-end test suite — auth, navigation, shifts, POS, ingredients,

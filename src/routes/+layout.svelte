@@ -14,10 +14,12 @@
 	import { authStore, initAuth, isOwner } from '$lib/stores/auth.svelte';
 	import { loadActiveShift } from '$lib/stores/shift.svelte';
 	import { connectRealtime } from '$lib/stores/realtime.svelte';
+	import { initInstall } from '$lib/stores/install.svelte';
 
 	import Toast from '$lib/components/Toast.svelte';
 	import TopBar from '$lib/components/TopBar.svelte';
 	import NavBar from '$lib/components/NavBar.svelte';
+	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	let { children } = $props();
@@ -32,6 +34,14 @@
 		if (started) return;
 		started = true;
 		void initAuth();
+		// Capture beforeinstallprompt as early as possible, even on /login, so the
+		// banner can offer install once the user is authenticated.
+		initInstall();
+		// Register the service worker (autoUpdate). No-op in dev where the PWA is
+		// disabled; in production this caches the app shell for offline launch.
+		void import('virtual:pwa-register').then(({ registerSW }) => {
+			registerSW({ immediate: true });
+		});
 	});
 
 	// Once authenticated, load the active shift + open the realtime channel once.
@@ -89,6 +99,7 @@
 			</div>
 		</div>
 	</div>
+	<InstallPrompt />
 	<Toast />
 {/if}
 

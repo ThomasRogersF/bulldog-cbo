@@ -2,14 +2,22 @@
 <html lang="es" data-theme="dark">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-		<link rel="icon" href="/favicon.ico" sizes="any" />
-		<link rel="manifest" href="/manifest.json" />
+		<link rel="icon" href="/icons/favicon.ico" sizes="any" />
+		<!-- vite-plugin-pwa generates manifest.webmanifest but does not inject the
+		     link into SvelteKit's app.html, so link it manually. The service worker
+		     is registered from +layout.svelte via virtual:pwa-register. -->
+		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="theme-color" content="#100F0D" />
+		<!-- iOS ignores the manifest for the home-screen icon + standalone chrome,
+		     so the apple-touch-icon link and these meta tags are required too. -->
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Bulldog CBO" />
+		<link rel="apple-touch-icon" href="/icons/icon-180.png" />
+		<!-- viewport-fit=cover lets env(safe-area-inset-*) resolve to real values so
+		     the black-translucent status bar / home indicator don't overlap content. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
 		<title>Bulldog CBO</title>
 		<script>

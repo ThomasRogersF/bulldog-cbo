@@ -102,12 +102,13 @@
 		position: sticky;
 		top: 0;
 		z-index: 20;
-		height: 70px;
+		/* Extend under the iOS status bar (black-translucent); keep 70px of content. */
+		height: calc(70px + env(safe-area-inset-top));
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		padding: 0 26px;
+		padding: env(safe-area-inset-top) 26px 0;
 		border-bottom: 1px solid var(--color-line);
 		background: color-mix(in srgb, var(--color-bg) 72%, transparent);
 		backdrop-filter: blur(10px);
@@ -184,7 +185,7 @@
 
 	@media (max-width: 640px) {
 		.topbar {
-			padding: 0 16px;
+			padding: env(safe-area-inset-top) 16px 0;
 		}
 		.topbar__sub {
 			display: none;

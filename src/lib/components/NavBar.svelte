@@ -352,7 +352,9 @@
 		z-index: 40;
 		/* display is set by the `flex lg:hidden` utilities so `lg:hidden` can win at ≥1024px
 		   (a scoped `display: flex` here would out-specify the utility and never hide). */
-		height: 66px;
+		/* Keep 66px of tap targets above the iOS home indicator (safe-area-inset-bottom). */
+		height: calc(66px + env(safe-area-inset-bottom));
+		padding-bottom: env(safe-area-inset-bottom);
 		background: color-mix(in srgb, var(--color-surface) 94%, transparent);
 		backdrop-filter: blur(14px);
 		border-top: 1px solid var(--color-line);

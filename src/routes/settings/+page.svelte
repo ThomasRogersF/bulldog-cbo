@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { settingsDb, notificationsDb } from '$lib/db';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { showInstall } from '$lib/stores/install.svelte';
 	import { t } from '$lib/i18n';
+	import { APP_VERSION } from '$lib/version';
 	import { formatDateTime } from '$lib/utils/format';
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
@@ -381,6 +383,22 @@
 						>
 							<span class="switch-thumb"></span>
 						</button>
+					</div>
+				</div>
+			</Card>
+
+			<!-- Acerca de -->
+			<Card>
+				<div class="flex flex-col gap-4">
+					<header class="section-header">
+						<span class="section-icon"><Icon name="box" size={18} /></span>
+						<h2 class="section-title">{t('settings.about')}</h2>
+					</header>
+					<p class="section-meta tabular-nums">{t('settings.version')} {APP_VERSION}</p>
+					<div class="self-start">
+						<Button variant="secondary" onclick={showInstall}>
+							{t('settings.howToInstall')}
+						</Button>
 					</div>
 				</div>
 			</Card>

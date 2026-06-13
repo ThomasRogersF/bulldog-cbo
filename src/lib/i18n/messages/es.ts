@@ -286,7 +286,18 @@ export const es = {
 		themeLight: 'Claro',
 		themeDark: 'Oscuro',
 		saved: 'Configuración guardada',
-		save: 'Guardar'
+		save: 'Guardar',
+		about: 'Acerca de',
+		version: 'Versión',
+		howToInstall: 'Cómo instalar la app'
+	},
+	install: {
+		title: 'Instala Bulldog CBO',
+		androidDesc: 'Agrégalo a tu pantalla de inicio para acceso rápido',
+		iosDesc: "Toca el botón compartir y selecciona 'Agregar a inicio'",
+		installBtn: 'Instalar',
+		dismissBtn: 'Ahora no',
+		gotItBtn: 'Entendido'
 	},
 	orderType: {
 		dine_in: 'Para aquí',
