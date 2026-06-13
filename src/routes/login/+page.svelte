@@ -8,7 +8,7 @@
 	import Input from '$lib/components/Input.svelte';
 	import Button from '$lib/components/Button.svelte';
 
-	let email = $state('');
+	let username = $state('');
 	let password = $state('');
 	let submitting = $state(false);
 	let hasError = $state(false);
@@ -19,7 +19,7 @@
 		submitting = true;
 		hasError = false;
 		try {
-			await signIn(email, password);
+			await signIn(username, password);
 			await goto(resolve('/pos'));
 		} catch {
 			hasError = true;
@@ -44,11 +44,11 @@
 			{/if}
 
 			<Input
-				label={t('login.email')}
-				type="email"
-				inputmode="email"
-				placeholder={t('login.emailPlaceholder')}
-				bind:value={email}
+				label={t('login.username')}
+				type="text"
+				autocomplete="username"
+				placeholder={t('login.usernamePlaceholder')}
+				bind:value={username}
 			/>
 			<Input
 				label={t('login.password')}

@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.0] — 2026-06-13
+
+Switch login from email to username. Adds `profiles.username` column (case-insensitive unique index), backfills owner as `dueno`, adds `get_email_by_username()` SECURITY DEFINER function for the login flow, and updates the login page, auth store, bootstrap script, and E2E tests accordingly.
+
 ## [0.0.9] — 2026-06-12
 
 Progressive Web App — installable on mobile and desktop with offline app-shell

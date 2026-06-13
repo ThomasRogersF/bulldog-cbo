@@ -8,6 +8,7 @@
 		helper,
 		disabled = false,
 		inputmode,
+		autocomplete,
 		id,
 		oninput
 	}: {
@@ -19,6 +20,7 @@
 		helper?: string;
 		disabled?: boolean;
 		inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+		autocomplete?: AutoFill | null;
 		id?: string;
 		oninput?: (e: Event) => void;
 	} = $props();
@@ -38,6 +40,7 @@
 		{placeholder}
 		{disabled}
 		{inputmode}
+		{autocomplete}
 		bind:value
 		{oninput}
 		class="field-input w-full"

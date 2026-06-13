@@ -9,13 +9,13 @@ export const es = {
 	login: {
 		title: 'Iniciar sesión',
 		subtitle: 'Sistema POS — Bulldog CBO',
-		email: 'Correo',
-		emailPlaceholder: 'tu@correo.com',
+		username: 'Usuario',
+		usernamePlaceholder: 'dueno',
 		password: 'Contraseña',
 		passwordPlaceholder: '••••••••',
 		submit: 'Iniciar sesión',
 		submitting: 'Ingresando…',
-		invalidCredentials: 'Correo o contraseña incorrectos',
+		invalidCredentials: 'Usuario o contraseña incorrectos',
 		error: 'No se pudo iniciar sesión'
 	},
 	nav: {

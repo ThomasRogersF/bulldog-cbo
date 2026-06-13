@@ -377,9 +377,13 @@ async function addLedgerMovement(input: LedgerMovementInput): Promise<Ingredient
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 export const auth = {
-	async signIn(email: string, password: string): Promise<AuthSession> {
+	async signIn(username: string, password: string): Promise<AuthSession> {
+		const { data: email, error: lookupError } = await supabase.rpc('get_email_by_username', {
+			p_username: username.trim()
+		});
+		if (lookupError || !email) throw new Error('Usuario o contraseña incorrectos');
 		const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-		if (error) throw new Error(error.message);
+		if (error) throw new Error('Usuario o contraseña incorrectos');
 		return { user: { id: data.user.id, email: data.user.email ?? null } };
 	},
 	async signOut(): Promise<void> {
