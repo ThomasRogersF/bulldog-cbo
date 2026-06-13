@@ -40,6 +40,25 @@ RLS requires an existing owner to manage profiles, and `profiles.id` references
    on conflict (id) do update set role = 'owner';
    ```
 
+## Username-based login
+
+`profiles.username` is the identifier workers type at the login screen (case-insensitive, unique). Supabase Auth still uses email internally — the username is only a human-friendly alias.
+
+**To create a new worker:**
+
+1. Create the auth user in the Supabase Dashboard with any internal email
+   (e.g. `worker1@bulldogcbo.internal` — the email is never shown to the user):
+   ```sql
+   -- via Supabase Auth Admin or Dashboard
+   ```
+2. Set the username they will actually type to log in:
+   ```sql
+   update profiles set username = 'maria', full_name = 'María González', role = 'worker'
+   where id = (select id from auth.users where email = 'worker1@bulldogcbo.internal');
+   ```
+
+The `get_email_by_username()` function is `SECURITY DEFINER` and intentionally bypasses RLS — it only returns an email for a valid, non-deleted username, and is used solely for the login flow. It is granted to `anon` so the login screen (which is unauthenticated) can call it.
+
 ## Security model notes
 
 - Owner checks go through the `is_owner()` SECURITY DEFINER helper — never inline a

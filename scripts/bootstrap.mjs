@@ -144,7 +144,9 @@ async function ensureOwnerUser() {
 async function ensureOwnerProfile(ownerId) {
 	console.log('→ Step 2: upserting owner profile…');
 	unwrap(
-		await supabase.from('profiles').upsert({ id: ownerId, full_name: OWNER_NAME, role: 'owner' }),
+		await supabase
+			.from('profiles')
+			.upsert({ id: ownerId, full_name: OWNER_NAME, role: 'owner', username: 'dueno' }),
 		'upsert profile'
 	);
 	console.log(`  ✓ Profile set: ${OWNER_NAME} (owner)`);
@@ -464,8 +466,8 @@ async function main() {
 	console.log('✅ Bootstrap complete.');
 	console.log('────────────────────────────────────────');
 	console.log(`   Log in at /login with:`);
-	console.log(`     Email:    ${OWNER_EMAIL}`);
-	console.log(`     Password: ${OWNER_PASSWORD}`);
+	console.log(`     Usuario:   dueno`);
+	console.log(`     Contraseña: ${OWNER_PASSWORD}`);
 	console.log('────────────────────────────────────────');
 }
 

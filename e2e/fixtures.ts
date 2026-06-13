@@ -8,11 +8,13 @@ dotenv.config({ path: path.resolve(process.cwd(), 'e2e', '.env.test'), quiet: tr
 
 export const OWNER = {
 	email: process.env.E2E_OWNER_EMAIL ?? '',
+	username: process.env.E2E_OWNER_USERNAME ?? 'dueno',
 	password: process.env.E2E_OWNER_PASSWORD ?? ''
 };
 
 export const WORKER = {
 	email: process.env.E2E_WORKER_EMAIL ?? '',
+	username: process.env.E2E_WORKER_USERNAME ?? '',
 	password: process.env.E2E_WORKER_PASSWORD ?? ''
 };
 
@@ -20,15 +22,15 @@ const OPEN_SHIFT = /abrir turno/i;
 const CLOSE_SHIFT = /cerrar turno/i;
 
 // Helper: log in and wait for the app shell
-export async function login(page: Page, email: string, password: string) {
-	if (!email || !password) {
+export async function login(page: Page, username: string, password: string) {
+	if (!username || !password) {
 		throw new Error(
-			'Missing E2E credentials — set E2E_OWNER_EMAIL / E2E_OWNER_PASSWORD in e2e/.env.test'
+			'Missing E2E credentials — set E2E_OWNER_USERNAME / E2E_OWNER_PASSWORD in e2e/.env.test'
 		);
 	}
 	await page.goto('/login');
-	await page.waitForSelector('input[type="email"]', { timeout: 10000 });
-	await page.fill('input[type="email"]', email);
+	await page.getByLabel(/usuario/i).waitFor({ state: 'visible', timeout: 10000 });
+	await page.getByLabel(/usuario/i).fill(username);
 	await page.fill('input[type="password"]', password);
 	await page.click('button[type="submit"]');
 	// Wait for redirect away from login

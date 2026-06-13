@@ -9,7 +9,7 @@ import { STORAGE_STATE } from '../playwright.config';
 // reuse it instead of signing in again — which would hit Supabase's auth rate
 // limit and slow the suite to a crawl.
 setup('authenticate as owner', async ({ page }) => {
-	await login(page, OWNER.email, OWNER.password);
+	await login(page, OWNER.username, OWNER.password);
 	await mkdir(path.dirname(STORAGE_STATE), { recursive: true });
 	await page.context().storageState({ path: STORAGE_STATE });
 });

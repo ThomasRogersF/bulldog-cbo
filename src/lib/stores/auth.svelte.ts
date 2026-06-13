@@ -40,8 +40,8 @@ export async function initAuth(): Promise<void> {
 	authStore.ready = true;
 }
 
-export async function signIn(email: string, password: string): Promise<void> {
-	await auth.signIn(email, password);
+export async function signIn(username: string, password: string): Promise<void> {
+	await auth.signIn(username, password);
 	const session = await auth.getSession();
 	authStore.user = session?.user ?? null;
 	const profile = authStore.user ? await profilesDb.getCurrent() : null;
