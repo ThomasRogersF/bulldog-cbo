@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { MenuItem } from '$lib/types';
 	import { formatUsd } from '$lib/utils/format';
 	import { t } from '$lib/i18n';
@@ -19,8 +20,8 @@
 		bsText?: string;
 		onadd: (item: MenuItem) => void;
 	} = $props();
-
 	const glyph = $derived(categoryToGlyph(item.category_name ?? item.name));
+	let showGlyph = $state(untrack(() => !item.image_url));
 </script>
 
 <button
@@ -31,8 +32,21 @@
 	aria-label={item.name}
 	onclick={() => onadd(item)}
 >
-	<span class="tile__img">
-		<FoodGlyph name={glyph} size={34} />
+	<span class="tile__img" class:tile__img--photo={!!item.image_url}>
+		{#if item.image_url}
+			<img
+				src={item.image_url}
+				alt={item.name}
+				loading="lazy"
+				onerror={(e) => {
+					(e.target as HTMLImageElement).style.display = 'none';
+					showGlyph = true;
+				}}
+			/>
+		{/if}
+		{#if !item.image_url || showGlyph}
+			<FoodGlyph name={glyph} size={34} />
+		{/if}
 		{#if item.category_name}<span class="tile__cat">{item.category_name}</span>{/if}
 		{#if outOfStock}
 			<span class="tile__oos"><Badge variant="danger">{t('pos.outOfStock')}</Badge></span>
@@ -93,6 +107,26 @@
 		background: radial-gradient(circle at 32% 26%, var(--color-surface-3), var(--color-surface));
 		color: color-mix(in srgb, var(--color-mustard) 42%, transparent);
 		border-bottom: 1px solid var(--color-line);
+	}
+
+	.tile__img--photo img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: var(--r-tile) var(--r-tile) 0 0;
+		display: block;
+	}
+
+	.tile__img--photo::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 40px;
+		background: linear-gradient(transparent, rgba(16, 15, 13, 0.85));
+		border-radius: 0;
+		pointer-events: none;
 	}
 
 	.tile__cat {

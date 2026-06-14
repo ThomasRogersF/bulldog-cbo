@@ -65,7 +65,9 @@
 		flame:
 			'<path d="M12 3c2 3 5 4.2 5 8a5 5 0 0 1-10 0c0-1.6.8-2.8 1.5-3.5.3 1 1 1.8 2 2 0-2.8.4-4.8 1.5-6.5Z" />',
 		eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" />',
-		crown: '<path d="M4 8l3.5 3 4.5-6 4.5 6L20 8l-1.5 10h-13L4 8Z" />'
+		crown: '<path d="M4 8l3.5 3 4.5-6 4.5 6L20 8l-1.5 10h-13L4 8Z" />',
+		camera:
+			'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7l-1.5-3h-5L8 7"/><circle cx="12" cy="14" r="3.5"/>'
 	};
 
 	const inner = $derived(PATHS[name] ?? PATHS.grid);

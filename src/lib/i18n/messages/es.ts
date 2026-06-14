@@ -415,6 +415,15 @@ export const es = {
 		minutes: 'min',
 		hours: 'h',
 		days: 'd'
+	},
+	imageUpload: {
+		dropLabel: 'Arrastra una foto o toca para seleccionar',
+		hint: 'JPG, PNG o WebP · Máximo 10 MB · Se comprimirá automáticamente',
+		compressing: 'Comprimiendo imagen...',
+		uploading: 'Subiendo imagen...',
+		change: 'Cambiar foto',
+		notImage: 'El archivo seleccionado no es una imagen',
+		tooLarge: 'La imagen es demasiado grande (máximo 10 MB)'
 	}
 } as const;
 

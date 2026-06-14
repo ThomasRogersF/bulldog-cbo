@@ -11,6 +11,7 @@
 //    current session + active shift — never passed in by components.
 import { supabase } from './supabase';
 import { uuidv7 } from './utils/id';
+import { menuImagePath } from './utils/image';
 import { computeTotals, expectedCash, round2, variance } from './domain/money';
 import { expandRecipesToLedger } from './domain/recipe';
 import type {
@@ -519,7 +520,7 @@ export const menuDb = {
 				await supabase
 					.from('menu_items')
 					.insert({
-						id: uuidv7(),
+						id: input.id ?? uuidv7(),
 						name: input.name,
 						category_id: input.category_id ?? null,
 						description: input.description ?? null,
@@ -1195,3 +1196,30 @@ export const notificationsDb = {
 };
 
 export type { Setting };
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+export const storageDb = {
+	async uploadMenuImage(menuItemId: string, blob: Blob, format = 'webp'): Promise<string> {
+		const path = menuImagePath(menuItemId, format);
+
+		const { error } = await supabase.storage.from('menu-images').upload(path, blob, {
+			contentType: `image/${format}`,
+			upsert: false
+		});
+
+		if (error) throw error;
+
+		const { data } = supabase.storage.from('menu-images').getPublicUrl(path);
+		return data.publicUrl;
+	},
+
+	async deleteMenuImage(publicUrl: string): Promise<void> {
+		const marker = '/menu-images/';
+		const idx = publicUrl.indexOf(marker);
+		if (idx === -1) return;
+		const path = decodeURIComponent(publicUrl.slice(idx + marker.length));
+
+		const { error } = await supabase.storage.from('menu-images').remove([path]);
+		if (error) throw error;
+	}
+};

@@ -289,6 +289,7 @@ export interface NewMenuCategory {
 }
 
 export interface NewMenuItem {
+	id?: string;
 	name: string;
 	category_id?: string | null;
 	description?: string | null;

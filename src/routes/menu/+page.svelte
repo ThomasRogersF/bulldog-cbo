@@ -7,6 +7,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { MenuCategory, MenuItem, IngredientStock, RecipeLine } from '$lib/types';
 
+	import ImageUpload from '$lib/components/ImageUpload.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
@@ -46,6 +47,8 @@
 	let formPrice = $state('');
 	let formCategoryId = $state('');
 	let formAvailable = $state(true);
+	let formImageUrl = $state<string | null>(null);
+	let pendingItemId = $state<string>('');
 	let recipeRows = $state<RecipeRow[]>([]);
 	let nameError = $state('');
 	let priceError = $state('');
@@ -122,6 +125,8 @@
 		formPrice = '';
 		formCategoryId = categories[0]?.id ?? '';
 		formAvailable = true;
+		formImageUrl = null;
+		pendingItemId = uuidv7();
 		recipeRows = [];
 		nameError = '';
 		priceError = '';
@@ -140,6 +145,8 @@
 		formPrice = String(item.price_usd);
 		formCategoryId = item.category_id ?? '';
 		formAvailable = item.is_available;
+		formImageUrl = item.image_url;
+		pendingItemId = item.id;
 		nameError = '';
 		priceError = '';
 		recipeRows = [];
@@ -193,11 +200,12 @@
 				description: formDescription.trim() || null,
 				price_usd: price,
 				is_available: formAvailable,
-				category_id: formCategoryId || null
+				category_id: formCategoryId || null,
+				image_url: formImageUrl
 			};
 			const itemId = editingId
 				? (await menuDb.items.update(editingId, payload)).id
-				: (await menuDb.items.create(payload)).id;
+				: (await menuDb.items.create({ id: pendingItemId, ...payload })).id;
 
 			const recipeLines = recipeRows
 				.filter((r) => r.ingredient_id && r.qty.trim() && Number(r.qty) > 0)
@@ -212,6 +220,14 @@
 		} finally {
 			saving = false;
 		}
+	}
+
+	function handleImageUploaded(url: string) {
+		formImageUrl = url;
+	}
+
+	function handleImageDeleted() {
+		formImageUrl = null;
 	}
 
 	async function confirmDelete() {
@@ -399,6 +415,13 @@
 			bind:value={formCategoryId}
 			options={categoryOptions}
 			placeholder={t('common.none')}
+		/>
+
+		<ImageUpload
+			menuItemId={pendingItemId}
+			currentUrl={formImageUrl}
+			onUploaded={handleImageUploaded}
+			onDeleted={handleImageDeleted}
 		/>
 
 		<!-- Available toggle -->

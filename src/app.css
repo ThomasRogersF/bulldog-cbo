@@ -76,3 +76,23 @@
 .tabular-nums {
 	font-variant-numeric: tabular-nums;
 }
+
+/* Loading spinner — used by ImageUpload and other async components */
+.spinner {
+	width: 20px;
+	height: 20px;
+	border: 2.5px solid var(--color-line-2);
+	border-top-color: var(--color-mustard);
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+.spinner--sm {
+	width: 14px;
+	height: 14px;
+	border-width: 2px;
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

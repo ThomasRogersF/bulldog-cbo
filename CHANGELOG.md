@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.1] — 2026-06-14
+
+Image upload with client-side compression for menu items. Adds `menu-images` Supabase Storage bucket (2 MB limit, public read, auth write), a `compressImage` Canvas API utility (WebP, 800 px max, 82% quality), `ImageUpload` drop-zone component with drag-and-drop and before/after size stats, `storageDb` namespace in `db.ts`, and wires `image_url` through the menu edit form. POS tiles show the photo with a gradient overlay when one exists, falling back to the FoodGlyph icon. Adds camera icon to Icon set and spinner CSS to `app.css`.
+
 ## [0.1.0] — 2026-06-13
 
 Switch login from email to username. Adds `profiles.username` column (case-insensitive unique index), backfills owner as `dueno`, adds `get_email_by_username()` SECURITY DEFINER function for the login flow, and updates the login page, auth store, bootstrap script, and E2E tests accordingly.
