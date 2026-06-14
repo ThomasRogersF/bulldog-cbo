@@ -182,7 +182,7 @@
 		nameError = '';
 		priceError = '';
 		const name = formName.trim();
-		const price = Number(formPrice);
+		const price = Number(formPrice.trim().replace(',', '.'));
 		if (!name) {
 			nameError = t('validation.required');
 		}
@@ -208,8 +208,13 @@
 				: (await menuDb.items.create({ id: pendingItemId, ...payload })).id;
 
 			const recipeLines = recipeRows
-				.filter((r) => r.ingredient_id && r.qty.trim() && Number(r.qty) > 0)
-				.map((r) => ({ ingredient_id: r.ingredient_id, qty_required: Number(r.qty) }));
+				.filter(
+					(r) => r.ingredient_id && r.qty.trim() && Number(r.qty.trim().replace(',', '.')) > 0
+				)
+				.map((r) => ({
+					ingredient_id: r.ingredient_id,
+					qty_required: Number(r.qty.trim().replace(',', '.'))
+				}));
 			await menuDb.recipes.setForItem(itemId, recipeLines);
 
 			toast.success(t('menu.saved'));
@@ -396,6 +401,7 @@
 <Modal bind:open={panelOpen} title={editingId ? t('menu.editItem') : t('menu.addItem')}>
 	<form
 		class="flex flex-col gap-4"
+		novalidate
 		onsubmit={(e) => {
 			e.preventDefault();
 			save();
@@ -406,7 +412,7 @@
 		<Input
 			label={t('menu.price')}
 			bind:value={formPrice}
-			type="number"
+			type="text"
 			inputmode="decimal"
 			error={priceError}
 		/>
