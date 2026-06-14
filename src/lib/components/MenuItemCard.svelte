@@ -20,6 +20,7 @@
 		bsText?: string;
 		onadd: (item: MenuItem) => void;
 	} = $props();
+
 	const glyph = $derived(categoryToGlyph(item.category_name ?? item.name));
 	let showGlyph = $state(untrack(() => !item.image_url));
 </script>
@@ -27,49 +28,50 @@
 <button
 	type="button"
 	class="tile"
-	class:tile--active={qtyInCart > 0}
+	class:tile--in-cart={qtyInCart > 0}
 	class:tile--oos={outOfStock}
 	aria-label={item.name}
 	onclick={() => onadd(item)}
 >
+	<!-- IMAGE AREA -->
 	<span class="tile__img" class:tile__img--photo={!!item.image_url}>
-		{#if item.image_url}
+		{#if item.image_url && !showGlyph}
 			<img
 				src={item.image_url}
 				alt={item.name}
 				loading="lazy"
-				onerror={(e) => {
-					(e.target as HTMLImageElement).style.display = 'none';
+				onerror={() => {
 					showGlyph = true;
 				}}
 			/>
-		{/if}
-		{#if !item.image_url || showGlyph}
+		{:else}
 			<FoodGlyph name={glyph} size={34} />
 		{/if}
+
 		{#if item.category_name}<span class="tile__cat">{item.category_name}</span>{/if}
 		{#if outOfStock}
 			<span class="tile__oos"><Badge variant="danger">{t('pos.outOfStock')}</Badge></span>
 		{:else if qtyInCart > 0}
-			<span class="tile__count">{qtyInCart}</span>
+			<span class="tile__badge">{qtyInCart}</span>
 		{/if}
 	</span>
 
+	<!-- TEXT AREA -->
 	<span class="tile__body">
 		<span class="tile__name">{item.name}</span>
 		{#if item.description}<span class="tile__desc">{item.description}</span>{/if}
-		<span class="tile__price">
-			<span class="tile__usd tabular-nums">{formatUsd(item.price_usd)}</span>
-			{#if bsText}<span class="tile__bs tabular-nums">{bsText}</span>{/if}
+		<span class="tile__footer">
+			<span class="tile__prices">
+				<span class="tile__price tabular-nums">{formatUsd(item.price_usd)}</span>
+				{#if bsText}<span class="tile__bs tabular-nums">{bsText}</span>{/if}
+			</span>
+			<span class="tile__add"><Icon name="plus" size={18} stroke={2.6} /></span>
 		</span>
 	</span>
-
-	<span class="tile__add"><Icon name="plus" size={18} stroke={2.6} /></span>
 </button>
 
 <style>
 	.tile {
-		position: relative;
 		display: flex;
 		flex-direction: column;
 		text-align: left;
@@ -91,7 +93,7 @@
 		box-shadow: 0 14px 26px -16px rgba(0, 0, 0, 0.8);
 	}
 
-	.tile--active {
+	.tile--in-cart {
 		border-color: var(--color-mustard);
 	}
 
@@ -99,11 +101,16 @@
 		opacity: 0.66;
 	}
 
+	/* IMAGE AREA — fixed aspect ratio, clips photo to rounded top corners */
 	.tile__img {
 		position: relative;
-		height: 98px;
-		display: grid;
-		place-items: center;
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		flex-shrink: 0;
 		background: radial-gradient(circle at 32% 26%, var(--color-surface-3), var(--color-surface));
 		color: color-mix(in srgb, var(--color-mustard) 42%, transparent);
 		border-bottom: 1px solid var(--color-line);
@@ -113,7 +120,7 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		border-radius: var(--r-tile) var(--r-tile) 0 0;
+		object-position: center 30%;
 		display: block;
 	}
 
@@ -123,9 +130,8 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 40px;
-		background: linear-gradient(transparent, rgba(16, 15, 13, 0.85));
-		border-radius: 0;
+		height: 56px;
+		background: linear-gradient(transparent, rgba(16, 15, 13, 0.92));
 		pointer-events: none;
 	}
 
@@ -138,14 +144,13 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		color: var(--color-text-dim);
-		background: rgba(0, 0, 0, 0.55);
+		background: var(--color-surface);
 		padding: 3px 7px;
 		border-radius: 6px;
-		backdrop-filter: blur(4px);
 		z-index: 1;
 	}
 
-	.tile__count {
+	.tile__badge {
 		position: absolute;
 		top: 8px;
 		right: 8px;
@@ -156,8 +161,9 @@
 		color: var(--color-accent-fg);
 		font-weight: 800;
 		font-size: 12px;
-		display: grid;
-		place-items: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		padding: 0 6px;
 		z-index: 1;
 	}
@@ -169,38 +175,52 @@
 		z-index: 1;
 	}
 
+	/* TEXT AREA — sits below image, never overlaps */
 	.tile__body {
 		padding: 12px 13px 14px;
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
 		flex: 1;
+		background: var(--color-surface);
 	}
 
 	.tile__name {
 		font-weight: 700;
 		font-size: 14.5px;
 		color: var(--color-text);
+		line-height: 1.3;
 	}
 
 	.tile__desc {
 		font-size: 11.5px;
 		color: var(--color-text-faint);
 		line-height: 1.3;
-		margin-bottom: 8px;
-		flex: 1;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		line-clamp: 2;
+		overflow: hidden;
+	}
+
+	.tile__footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 6px;
+	}
+
+	.tile__prices {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
 	}
 
 	.tile__price {
-		display: flex;
-		align-items: baseline;
-		gap: 8px;
-	}
-
-	.tile__usd {
 		font-weight: 800;
 		font-size: 16px;
 		color: var(--color-mustard);
+		line-height: 1;
 	}
 
 	.tile__bs {
@@ -209,17 +229,16 @@
 	}
 
 	.tile__add {
-		position: absolute;
-		bottom: 12px;
-		right: 12px;
 		width: 32px;
 		height: 32px;
 		border-radius: 9px;
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-line-2);
 		color: var(--color-text);
-		display: grid;
-		place-items: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
 		transition: 0.15s;
 	}
 
