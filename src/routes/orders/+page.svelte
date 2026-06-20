@@ -15,6 +15,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import OrderCard from '$lib/components/OrderCard.svelte';
+	import ExportButton from '$lib/components/ExportButton.svelte';
+	import { dateFilename } from '$lib/utils/export';
 
 	type Tab = 'open' | 'history';
 
@@ -153,31 +155,69 @@
 		if (status === 'cancelled') return 'danger';
 		return 'neutral';
 	}
+
+	function getOrdersExportOptions() {
+		const list = activeTab === 'open' ? openOrders : filteredHistory;
+		const rows = list.map((o) => ({
+			numero: o.order_number,
+			fecha: new Date(o.created_at).toLocaleDateString('es-VE'),
+			hora: new Date(o.created_at).toLocaleTimeString('es-VE', {
+				hour: '2-digit',
+				minute: '2-digit'
+			}),
+			trabajador: o.worker_name ?? '',
+			tipo: t('orderType.' + o.order_type),
+			estado: t('status.' + o.status),
+			metodo_pago: o.payment_method ? t('payment.' + o.payment_method) : '',
+			total_usd: (o.total_usd ?? 0).toFixed(2),
+			total_bs: (o.total_bs ?? 0).toFixed(2)
+		}));
+		return {
+			filename: dateFilename('pedidos'),
+			title: 'Reporte de Pedidos',
+			subtitle: `${rows.length} pedidos · ${activeTab === 'open' ? 'Abiertos' : 'Historial'}`,
+			columns: [
+				{ key: 'numero', label: '#' },
+				{ key: 'fecha', label: 'Fecha' },
+				{ key: 'hora', label: 'Hora' },
+				{ key: 'trabajador', label: 'Trabajador' },
+				{ key: 'tipo', label: 'Tipo' },
+				{ key: 'estado', label: 'Estado' },
+				{ key: 'metodo_pago', label: 'Pago' },
+				{ key: 'total_usd', label: 'Total USD' },
+				{ key: 'total_bs', label: 'Total Bs' }
+			],
+			rows
+		};
+	}
 </script>
 
 <div class="page flex flex-col gap-4">
-	<!-- Tab bar -->
-	<div class="tabs flex" role="tablist">
-		<button
-			type="button"
-			role="tab"
-			aria-selected={activeTab === 'open'}
-			class="tab"
-			class:active={activeTab === 'open'}
-			onclick={() => (activeTab = 'open')}
-		>
-			{t('orders.tabOpen')}
-		</button>
-		<button
-			type="button"
-			role="tab"
-			aria-selected={activeTab === 'history'}
-			class="tab"
-			class:active={activeTab === 'history'}
-			onclick={() => (activeTab = 'history')}
-		>
-			{t('orders.tabHistory')}
-		</button>
+	<!-- Tab bar + export -->
+	<div class="page-top">
+		<div class="tabs flex" role="tablist">
+			<button
+				type="button"
+				role="tab"
+				aria-selected={activeTab === 'open'}
+				class="tab"
+				class:active={activeTab === 'open'}
+				onclick={() => (activeTab = 'open')}
+			>
+				{t('orders.tabOpen')}
+			</button>
+			<button
+				type="button"
+				role="tab"
+				aria-selected={activeTab === 'history'}
+				class="tab"
+				class:active={activeTab === 'history'}
+				onclick={() => (activeTab = 'history')}
+			>
+				{t('orders.tabHistory')}
+			</button>
+		</div>
+		<ExportButton getExportOptions={getOrdersExportOptions} />
 	</div>
 
 	{#if activeTab === 'open'}
@@ -350,9 +390,16 @@
 		padding: 24px 26px 44px;
 	}
 
-	/* Tabs */
-	.tabs {
+	/* Tab bar + export row */
+	.page-top {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 12px;
 		border-bottom: 1px solid var(--color-line);
+	}
+
+	.tabs {
 		gap: 4px;
 	}
 

@@ -424,6 +424,15 @@ export const es = {
 		change: 'Cambiar foto',
 		notImage: 'El archivo seleccionado no es una imagen',
 		tooLarge: 'La imagen es demasiado grande (máximo 10 MB)'
+	},
+	export: {
+		button: 'Exportar',
+		csvHint: 'Para hojas de cálculo y sistemas externos',
+		excelHint: 'Archivo .xlsx con formato',
+		pdfHint: 'Reporte listo para imprimir o compartir',
+		noData: 'No hay datos para exportar',
+		success: 'Exportación completada',
+		error: 'Error al exportar los datos'
 	}
 } as const;
 

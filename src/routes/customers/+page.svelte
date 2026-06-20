@@ -16,6 +16,8 @@
 	import OrderCard from '$lib/components/OrderCard.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ExportButton from '$lib/components/ExportButton.svelte';
+	import { dateFilename } from '$lib/utils/export';
 
 	// ── List state ────────────────────────────────────────────────────────────
 	let customers = $state<CustomerStats[]>([]);
@@ -198,6 +200,37 @@
 		addOpen = true;
 	}
 
+	function getCustomersExportOptions() {
+		const rows = customers.map((c) => ({
+			nombre: c.name,
+			telefono: c.phone ?? '',
+			origen: t('customerSource.' + c.source),
+			grupo: c.group_tag ? t('customerGroup.' + c.group_tag) : '',
+			compras: c.purchase_count,
+			total_gastado: c.total_spent_usd.toFixed(2),
+			ultima_compra: c.last_purchase_at
+				? new Date(c.last_purchase_at).toLocaleDateString('es-VE')
+				: t('customers.never'),
+			saldo_pendiente: c.credit_balance_usd.toFixed(2)
+		}));
+		return {
+			filename: dateFilename('clientes'),
+			title: 'Reporte de Clientes',
+			subtitle: `${rows.length} clientes`,
+			columns: [
+				{ key: 'nombre', label: 'Nombre' },
+				{ key: 'telefono', label: 'Teléfono' },
+				{ key: 'origen', label: 'Origen' },
+				{ key: 'grupo', label: 'Grupo' },
+				{ key: 'compras', label: 'Compras' },
+				{ key: 'total_gastado', label: 'Total gastado USD' },
+				{ key: 'ultima_compra', label: 'Última compra' },
+				{ key: 'saldo_pendiente', label: 'Saldo pendiente USD' }
+			],
+			rows
+		};
+	}
+
 	async function createCustomer(): Promise<void> {
 		if (!addName.trim()) {
 			addError = t('validation.required');
@@ -229,7 +262,7 @@
 		<Button icon="plus" onclick={openAdd}>{t('customers.add')}</Button>
 	</div>
 
-	<!-- Search -->
+	<!-- Search + export -->
 	<div class="search-row flex items-center gap-2">
 		<div class="flex-1">
 			<Input
@@ -243,6 +276,7 @@
 		{#if searching}
 			<LoadingSpinner size="sm" />
 		{/if}
+		<ExportButton getExportOptions={getCustomersExportOptions} disabled={loading} />
 	</div>
 
 	<!-- List -->

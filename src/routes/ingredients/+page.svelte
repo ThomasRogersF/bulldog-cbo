@@ -22,6 +22,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ExportButton from '$lib/components/ExportButton.svelte';
+	import { dateFilename } from '$lib/utils/export';
 
 	// 'low' = critical/out (red), 'mid' = low (amber), 'ok' = healthy (green)
 	function levelOf(it: IngredientStock): 'low' | 'mid' | 'ok' {
@@ -225,6 +227,60 @@
 		addOpen = true;
 	}
 
+	function getStockExportOptions() {
+		const rows = filteredItems.map((i) => ({
+			nombre: i.name,
+			categoria: i.category_name ?? '',
+			stock_actual: i.current_stock,
+			unidad: t('units.' + i.unit),
+			stock_minimo: i.min_stock,
+			estado: i.is_out_of_stock ? 'Agotado' : i.is_low_stock ? 'Bajo' : 'OK'
+		}));
+		return {
+			filename: dateFilename('inventario'),
+			title: 'Reporte de Inventario',
+			subtitle: `${rows.length} ingredientes`,
+			columns: [
+				{ key: 'nombre', label: 'Ingrediente' },
+				{ key: 'categoria', label: 'Categoría' },
+				{ key: 'stock_actual', label: 'Stock' },
+				{ key: 'unidad', label: 'Unidad' },
+				{ key: 'stock_minimo', label: 'Mínimo' },
+				{ key: 'estado', label: 'Estado' }
+			],
+			rows
+		};
+	}
+
+	function getMovementsExportOptions() {
+		const rows = filteredMovements.map((m) => ({
+			fecha: new Date(m.created_at).toLocaleString('es-VE'),
+			ingrediente: m.ingredient_name ?? '',
+			cantidad: m.qty_change,
+			razon: t('ingredientReason.' + m.reason),
+			actor: m.actor_name ?? '',
+			nota: m.note ?? ''
+		}));
+		return {
+			filename: dateFilename('movimientos-inventario'),
+			title: 'Movimientos de Inventario',
+			subtitle: `${rows.length} movimientos`,
+			columns: [
+				{ key: 'fecha', label: 'Fecha' },
+				{ key: 'ingrediente', label: 'Ingrediente' },
+				{ key: 'cantidad', label: 'Cantidad' },
+				{ key: 'razon', label: 'Razón' },
+				{ key: 'actor', label: 'Trabajador' },
+				{ key: 'nota', label: 'Nota' }
+			],
+			rows
+		};
+	}
+
+	const getIngExportOptions = $derived(
+		tab === 'stock' ? getStockExportOptions : getMovementsExportOptions
+	);
+
 	async function submitAdd() {
 		if (!addName.trim()) {
 			toast.error(t('validation.required'));
@@ -252,7 +308,7 @@
 </script>
 
 <div class="page">
-	<!-- Segmented control + alert -->
+	<!-- Segmented control + alert + export -->
 	<div class="ing-top">
 		<div class="segmented" role="tablist">
 			<button
@@ -278,13 +334,16 @@
 				{t('ingredients.tabMovements')}
 			</button>
 		</div>
-		{#if tab === 'stock' && lowCount > 0}
-			<div class="ing-alert">
-				<Icon name="alert" size={16} />
-				<b>{lowCount}</b>
-				{t('ingredients.outOfStock')}
-			</div>
-		{/if}
+		<div class="ing-top-right">
+			{#if tab === 'stock' && lowCount > 0}
+				<div class="ing-alert">
+					<Icon name="alert" size={16} />
+					<b>{lowCount}</b>
+					{t('ingredients.outOfStock')}
+				</div>
+			{/if}
+			<ExportButton getExportOptions={getIngExportOptions} />
+		</div>
 	</div>
 
 	{#if tab === 'stock'}
@@ -571,6 +630,12 @@
 		justify-content: space-between;
 		gap: 14px;
 		flex-wrap: wrap;
+	}
+
+	.ing-top-right {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 	}
 
 	/* Segmented control */

@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.2] — 2026-06-20
+
+CSV, Excel, and PDF export for Pedidos, Ingredientes, Clientes, and Turnos. All generation is client-side (`xlsx`, `jspdf`, `jspdf-autotable`). Each screen's "Exportar" button snapshots exactly the currently visible, filtered list. Adds `ExportButton` dropdown component, `src/lib/utils/export.ts` core utility with BOM-prefixed CSV, auto-sized Excel sheets, and PDF reports with Bulldog CBO header + mustard table styling. Adds four icons (`download`, `file-text`, `table`, `file`) to `Icon.svelte` and an `export` i18n namespace to `es.ts`. Mobile: label collapses below 480 px. Bundle size impact: xlsx ~49 kB gz, jspdf ~47 kB gz, jspdf-autotable ~57 kB gz (lazy-loaded per-page).
+
 ## [0.1.1] — 2026-06-14
 
 Image upload with client-side compression for menu items. Adds `menu-images` Supabase Storage bucket (2 MB limit, public read, auth write), a `compressImage` Canvas API utility (WebP, 800 px max, 82% quality), `ImageUpload` drop-zone component with drag-and-drop and before/after size stats, `storageDb` namespace in `db.ts`, and wires `image_url` through the menu edit form. POS tiles show the photo with a gradient overlay when one exists, falling back to the FoodGlyph icon. Adds camera icon to Icon set and spinner CSS to `app.css`.

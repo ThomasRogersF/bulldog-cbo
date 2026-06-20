@@ -17,6 +17,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import ExportButton from '$lib/components/ExportButton.svelte';
+	import { dateFilename } from '$lib/utils/export';
 
 	const PAYMENT_METHODS: PaymentMethod[] = [
 		'cash_usd',
@@ -204,6 +206,33 @@
 		closingCash = '';
 		closeNotes = '';
 		closeOpen = true;
+	}
+
+	function getShiftsExportOptions() {
+		const rows = closedHistory.map((s) => ({
+			numero: s.shift_number,
+			fecha: new Date(s.opened_at).toLocaleDateString('es-VE'),
+			duracion: formatDuration(s.opened_at, s.closed_at),
+			efectivo_inicial: (s.opening_cash_usd ?? 0).toFixed(2),
+			efectivo_esperado: (s.expected_cash_usd ?? 0).toFixed(2),
+			efectivo_contado: (s.closing_cash_usd ?? 0).toFixed(2),
+			diferencia: (s.variance_usd ?? 0).toFixed(2)
+		}));
+		return {
+			filename: dateFilename('turnos'),
+			title: 'Historial de Turnos',
+			subtitle: `${rows.length} turnos`,
+			columns: [
+				{ key: 'numero', label: 'Turno #' },
+				{ key: 'fecha', label: 'Fecha' },
+				{ key: 'duracion', label: 'Duración' },
+				{ key: 'efectivo_inicial', label: 'Inicial USD' },
+				{ key: 'efectivo_esperado', label: 'Esperado USD' },
+				{ key: 'efectivo_contado', label: 'Contado USD' },
+				{ key: 'diferencia', label: 'Diferencia USD' }
+			],
+			rows
+		};
 	}
 
 	async function handleClose(): Promise<void> {
@@ -457,7 +486,10 @@
 
 	<!-- Shift history -->
 	<section class="flex flex-col gap-3">
-		<h2 class="section-heading">{t('shifts.history')}</h2>
+		<div class="flex items-center justify-between gap-3">
+			<h2 class="section-heading">{t('shifts.history')}</h2>
+			<ExportButton getExportOptions={getShiftsExportOptions} disabled={historyLoading} />
+		</div>
 		{#if historyLoading && closedHistory.length === 0}
 			<div class="flex justify-center py-8">
 				<LoadingSpinner />
