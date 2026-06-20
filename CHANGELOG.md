@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.3] — 2026-06-20
+
+Shared date range filter (`DateRangeFilter` component) wired into Pedidos (history tab), Ingredientes (movements tab), Clientes, and Turnos. Presets: Hoy / Ayer / Esta semana / Este mes / Todo / Rango personalizado. Each screen's filter drives both the visible list and the export — they always show identical data. Defaults: orders history = today, movements = week, customers = all, shifts = month. Adds `src/lib/utils/dateRange.ts` utility, `calendar` icon to `Icon.svelte`, and a `dateRange` i18n namespace to `es.ts`.
+
 ## [0.1.2] — 2026-06-20
 
 CSV, Excel, and PDF export for Pedidos, Ingredientes, Clientes, and Turnos. All generation is client-side (`xlsx`, `jspdf`, `jspdf-autotable`). Each screen's "Exportar" button snapshots exactly the currently visible, filtered list. Adds `ExportButton` dropdown component, `src/lib/utils/export.ts` core utility with BOM-prefixed CSV, auto-sized Excel sheets, and PDF reports with Bulldog CBO header + mustard table styling. Adds four icons (`download`, `file-text`, `table`, `file`) to `Icon.svelte` and an `export` i18n namespace to `es.ts`. Mobile: label collapses below 480 px. Bundle size impact: xlsx ~49 kB gz, jspdf ~47 kB gz, jspdf-autotable ~57 kB gz (lazy-loaded per-page).
