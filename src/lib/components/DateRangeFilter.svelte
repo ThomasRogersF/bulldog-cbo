@@ -134,13 +134,15 @@
 	.daterange__menu {
 		position: absolute;
 		top: calc(100% + 6px);
-		left: 0;
+		right: 0;
+		left: auto;
 		background: var(--color-surface);
 		border: 1px solid var(--color-line);
 		border-radius: var(--r-card);
 		box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
 		z-index: 45;
-		min-width: 260px;
+		width: min(260px, calc(100vw - 32px));
+		max-width: 260px;
 		padding: 10px;
 	}
 
@@ -191,17 +193,19 @@
 		align-items: center;
 		gap: 6px;
 		margin-bottom: 8px;
+		flex-wrap: nowrap;
 	}
 
 	.daterange__date {
-		flex: 1;
+		flex: 1 1 0;
+		min-width: 0;
 		background: var(--color-surface-2);
 		border: 1px solid var(--color-line-2);
 		border-radius: 8px;
-		padding: 8px 9px;
+		padding: 8px 6px;
 		color: var(--color-text);
-		font-size: 12.5px;
-		min-width: 0;
+		font-size: 12px;
+		width: 100%;
 	}
 
 	.daterange__sep {
