@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.4] — 2026-06-20
+
+Automatic BCV exchange rate fetching via `fetch-bcv-rate` Edge Function (dolarapi.com, every 30 minutes via pg_cron). Manual override in Settings still works and is respected for 30 minutes before auto-fetch resumes. Settings screen now shows the rate prominently with source label (Automática / Manual) and relative timestamp. Adds `usd_rate_source` and `usd_rate_fetched_from` settings keys, `settingsDb.refreshBcvRate()` in `db.ts`, and a "Actualizar desde BCV ahora" button for on-demand refresh. Edge Function runs with `verify_jwt = false` (no user input; public price feed).
+
 ## [0.1.3] — 2026-06-20
 
 Shared date range filter (`DateRangeFilter` component) wired into Pedidos (history tab), Ingredientes (movements tab), Clientes, and Turnos. Presets: Hoy / Ayer / Esta semana / Este mes / Todo / Rango personalizado. Each screen's filter drives both the visible list and the export — they always show identical data. Defaults: orders history = today, movements = week, customers = all, shifts = month. Adds `src/lib/utils/dateRange.ts` utility, `calendar` icon to `Icon.svelte`, and a `dateRange` i18n namespace to `es.ts`.

@@ -1123,6 +1123,16 @@ export const settingsDb = {
 			.update({ value, updated_by: userId, updated_at: nowIso() })
 			.eq('key', key);
 		if (error) throw new Error(error.message);
+	},
+	async refreshBcvRate(): Promise<{
+		ok: boolean;
+		rate?: number;
+		skipped?: boolean;
+		reason?: string;
+	}> {
+		const { data, error } = await supabase.functions.invoke('fetch-bcv-rate');
+		if (error) throw error;
+		return data;
 	}
 };
 

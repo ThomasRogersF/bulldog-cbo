@@ -4,7 +4,6 @@
 	import { showInstall } from '$lib/stores/install.svelte';
 	import { t } from '$lib/i18n';
 	import { APP_VERSION } from '$lib/version';
-	import { formatDateTime } from '$lib/utils/format';
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Input from '$lib/components/Input.svelte';
@@ -18,7 +17,17 @@
 	// Exchange rate
 	let usdRate = $state('');
 	let usdRateUpdatedAt = $state<string | null>(null);
+	let usdRateSource = $state('manual');
 	let savingRate = $state(false);
+	let refreshing = $state(false);
+
+	const rateAgeText = $derived.by(() => {
+		if (!usdRateUpdatedAt) return null;
+		const minutes = Math.round((Date.now() - new Date(usdRateUpdatedAt).getTime()) / 60000);
+		const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+		if (Math.abs(minutes) < 60) return rtf.format(-minutes, 'minute');
+		return rtf.format(-Math.round(minutes / 60), 'hour');
+	});
 
 	// Telegram
 	let telegramBotToken = $state('');
@@ -73,6 +82,7 @@
 			const s = await settingsDb.getAll();
 			usdRate = s.usd_rate ?? '';
 			usdRateUpdatedAt = s.usd_rate_updated_at ?? null;
+			usdRateSource = s.usd_rate_source ?? 'manual';
 			telegramBotToken = s.telegram_bot_token ?? '';
 			telegramChatId = s.telegram_chat_id ?? '';
 			alerts = {
@@ -104,15 +114,32 @@
 	async function saveRate(): Promise<void> {
 		savingRate = true;
 		try {
-			const okValue = await saveSetting('usd_rate', usdRate);
-			if (!okValue) return;
 			const iso = new Date().toISOString();
-			const okStamp = await saveSetting('usd_rate_updated_at', iso);
-			if (!okStamp) return;
+			if (!(await saveSetting('usd_rate', usdRate))) return;
+			if (!(await saveSetting('usd_rate_source', 'manual'))) return;
+			if (!(await saveSetting('usd_rate_updated_at', iso))) return;
 			usdRateUpdatedAt = iso;
-			toast.success(t('toasts.rateUpdated'));
+			usdRateSource = 'manual';
+			toast.success(t('toasts.rateUpdatedManually'));
 		} finally {
 			savingRate = false;
+		}
+	}
+
+	async function refreshFromBCV(): Promise<void> {
+		refreshing = true;
+		try {
+			const result = await settingsDb.refreshBcvRate();
+			if (result.skipped) {
+				toast.info(t('toasts.rateSkippedRecent'));
+			} else {
+				toast.success(t('toasts.rateUpdated'));
+			}
+			await load();
+		} catch {
+			toast.error(t('toasts.rateFetchError'));
+		} finally {
+			refreshing = false;
 		}
 	}
 
@@ -221,20 +248,34 @@
 						<span class="section-icon"><Icon name="swap" size={18} /></span>
 						<h2 class="section-title">{t('settings.exchangeRate')}</h2>
 					</header>
-					{#if usdRateUpdatedAt}
+					<div class="rate-display">
+						<span class="rate-value">
+							{Number(usdRate || 0).toLocaleString('es-VE', {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2
+							})} Bs
+						</span>
 						<p class="section-meta">
-							{t('settings.rateUpdated')}: {formatDateTime(usdRateUpdatedAt)}
+							{t('settings.rateSource')}:
+							{usdRateSource === 'auto'
+								? t('settings.rateSourceAuto')
+								: t('settings.rateSourceManual')}
+							{#if rateAgeText}
+								· {rateAgeText}{/if}
 						</p>
-					{/if}
+					</div>
 					<Input
 						label={t('settings.usdRate')}
 						type="number"
 						inputmode="decimal"
 						bind:value={usdRate}
 					/>
-					<div class="self-start">
+					<div class="flex flex-col gap-2 sm:flex-row">
 						<Button onclick={saveRate} loading={savingRate}>
 							{t('settings.updateRate')}
+						</Button>
+						<Button variant="secondary" onclick={refreshFromBCV} loading={refreshing}>
+							{t('settings.refreshFromBCV')}
 						</Button>
 					</div>
 				</div>
@@ -407,6 +448,20 @@
 </div>
 
 <style>
+	.rate-display {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.rate-value {
+		font-family: var(--font-sans);
+		font-size: 2rem;
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-mustard);
+	}
+
 	.section-header {
 		display: flex;
 		align-items: center;

@@ -289,7 +289,11 @@ export const es = {
 		save: 'Guardar',
 		about: 'Acerca de',
 		version: 'Versión',
-		howToInstall: 'Cómo instalar la app'
+		howToInstall: 'Cómo instalar la app',
+		rateSource: 'Fuente',
+		rateSourceAuto: 'Automática (BCV)',
+		rateSourceManual: 'Manual',
+		refreshFromBCV: '🔄 Actualizar desde BCV ahora'
 	},
 	install: {
 		title: 'Instala Bulldog CBO',
@@ -369,7 +373,10 @@ export const es = {
 		testFailed: 'No se pudo enviar el mensaje de prueba',
 		telegramNotConfigured: 'Configura el token y el chat ID primero',
 		loginFailed: 'No se pudo iniciar sesión',
-		signedOut: 'Sesión cerrada'
+		signedOut: 'Sesión cerrada',
+		rateUpdatedManually: 'Tasa actualizada manualmente',
+		rateSkippedRecent: 'Hay una tasa manual reciente, no se sobrescribió',
+		rateFetchError: 'Error al consultar BCV'
 	},
 	ingredientReason: {
 		sale: 'Venta',
