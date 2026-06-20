@@ -40,31 +40,6 @@ serve(async (req) => {
       throw new Error(`Rate ${rate} failed sanity check, refusing to apply`)
     }
 
-    const { data: lastSourceSetting } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'usd_rate_source')
-      .single()
-
-    const { data: rateUpdatedAtSetting } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'usd_rate_updated_at')
-      .single()
-
-    const lastSource = lastSourceSetting?.value ?? 'auto'
-    const lastUpdate = rateUpdatedAtSetting?.value ? new Date(rateUpdatedAtSetting.value) : null
-    const minutesSinceUpdate = lastUpdate
-      ? (Date.now() - lastUpdate.getTime()) / 60000
-      : Infinity
-
-    if (lastSource === 'manual' && minutesSinceUpdate < 30) {
-      return new Response(
-        JSON.stringify({ ok: true, skipped: true, reason: 'recent manual override' }),
-        { headers: jsonHeaders }
-      )
-    }
-
     const now = new Date().toISOString()
 
     await supabase.from('settings').upsert([

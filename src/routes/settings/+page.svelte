@@ -129,12 +129,8 @@
 	async function refreshFromBCV(): Promise<void> {
 		refreshing = true;
 		try {
-			const result = await settingsDb.refreshBcvRate();
-			if (result.skipped) {
-				toast.info(t('toasts.rateSkippedRecent'));
-			} else {
-				toast.success(t('toasts.rateUpdated'));
-			}
+			await settingsDb.refreshBcvRate();
+			toast.success(t('toasts.rateUpdated'));
 			await load();
 		} catch {
 			toast.error(t('toasts.rateFetchError'));
