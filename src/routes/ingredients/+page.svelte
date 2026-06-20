@@ -24,6 +24,8 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import { dateFilename } from '$lib/utils/export';
+	import DateRangeFilter from '$lib/components/DateRangeFilter.svelte';
+	import { rangeFromPreset, isInRange, rangeLabel, type DateRange } from '$lib/utils/dateRange';
 
 	// 'low' = critical/out (red), 'mid' = low (amber), 'ok' = healthy (green)
 	function levelOf(it: IngredientStock): 'low' | 'mid' | 'ok' {
@@ -68,6 +70,7 @@
 	let movementsLoading = $state(true);
 	let filterIngredient = $state<string>('all');
 	let filterReason = $state<string>('all');
+	let movementsDateRange = $state<DateRange>(rangeFromPreset('week'));
 
 	const REASONS: LedgerReason[] = [
 		'sale',
@@ -82,6 +85,7 @@
 		movements.filter((m) => {
 			if (filterIngredient !== 'all' && m.ingredient_id !== filterIngredient) return false;
 			if (filterReason !== 'all' && m.reason !== filterReason) return false;
+			if (!isInRange(m.created_at, movementsDateRange)) return false;
 			return true;
 		})
 	);
@@ -264,7 +268,7 @@
 		return {
 			filename: dateFilename('movimientos-inventario'),
 			title: 'Movimientos de Inventario',
-			subtitle: `${rows.length} movimientos`,
+			subtitle: `${rows.length} movimientos · ${rangeLabel(movementsDateRange)}`,
 			columns: [
 				{ key: 'fecha', label: 'Fecha' },
 				{ key: 'ingrediente', label: 'Ingrediente' },
@@ -341,6 +345,9 @@
 					<b>{lowCount}</b>
 					{t('ingredients.outOfStock')}
 				</div>
+			{/if}
+			{#if tab === 'movements'}
+				<DateRangeFilter value={movementsDateRange} onChange={(r) => (movementsDateRange = r)} />
 			{/if}
 			<ExportButton getExportOptions={getIngExportOptions} />
 		</div>

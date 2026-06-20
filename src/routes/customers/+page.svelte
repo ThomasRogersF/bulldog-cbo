@@ -18,12 +18,23 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import { dateFilename } from '$lib/utils/export';
+	import DateRangeFilter from '$lib/components/DateRangeFilter.svelte';
+	import { rangeFromPreset, isInRange, rangeLabel, type DateRange } from '$lib/utils/dateRange';
 
 	// ── List state ────────────────────────────────────────────────────────────
 	let customers = $state<CustomerStats[]>([]);
 	let loading = $state(true);
 	let query = $state('');
 	let searching = $state(false);
+	let custDateRange = $state<DateRange>(rangeFromPreset('all'));
+
+	const filteredCustomers = $derived(
+		customers.filter((c) => {
+			if (custDateRange.preset === 'all') return true;
+			if (!c.last_purchase_at) return false;
+			return isInRange(c.last_purchase_at, custDateRange);
+		})
+	);
 
 	// Source / group option builders (labels resolved via t() in markup helpers).
 	const SOURCES: CustomerSource[] = ['walk_in', 'regular', 'delivery', 'referred', 'other'];
@@ -201,7 +212,7 @@
 	}
 
 	function getCustomersExportOptions() {
-		const rows = customers.map((c) => ({
+		const rows = filteredCustomers.map((c) => ({
 			nombre: c.name,
 			telefono: c.phone ?? '',
 			origen: t('customerSource.' + c.source),
@@ -216,7 +227,7 @@
 		return {
 			filename: dateFilename('clientes'),
 			title: 'Reporte de Clientes',
-			subtitle: `${rows.length} clientes`,
+			subtitle: `${rows.length} clientes · ${rangeLabel(custDateRange)}`,
 			columns: [
 				{ key: 'nombre', label: 'Nombre' },
 				{ key: 'telefono', label: 'Teléfono' },
@@ -276,6 +287,7 @@
 		{#if searching}
 			<LoadingSpinner size="sm" />
 		{/if}
+		<DateRangeFilter value={custDateRange} onChange={(r) => (custDateRange = r)} />
 		<ExportButton getExportOptions={getCustomersExportOptions} disabled={loading} />
 	</div>
 
@@ -284,19 +296,19 @@
 		<div class="flex justify-center py-12">
 			<LoadingSpinner size="lg" />
 		</div>
-	{:else if customers.length === 0}
-		{#if query.trim()}
-			<EmptyState icon="search" title={t('customers.noResults')} />
-		{:else}
+	{:else if filteredCustomers.length === 0}
+		{#if customers.length === 0 && !query.trim() && custDateRange.preset === 'all'}
 			<EmptyState icon="users" title={t('customers.noCustomers')}>
 				{#snippet action()}
 					<Button onclick={openAdd}>{t('customers.add')}</Button>
 				{/snippet}
 			</EmptyState>
+		{:else}
+			<EmptyState icon="search" title={t('customers.noResults')} />
 		{/if}
 	{:else}
 		<div class="flex flex-col gap-3">
-			{#each customers as c (c.id)}
+			{#each filteredCustomers as c (c.id)}
 				<button type="button" class="card-btn w-full text-left" onclick={() => openDetail(c)}>
 					<Card>
 						<div class="flex items-start gap-3">

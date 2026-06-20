@@ -18,7 +18,9 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
+	import DateRangeFilter from '$lib/components/DateRangeFilter.svelte';
 	import { dateFilename } from '$lib/utils/export';
+	import { rangeFromPreset, isInRange, rangeLabel, type DateRange } from '$lib/utils/dateRange';
 
 	const PAYMENT_METHODS: PaymentMethod[] = [
 		'cash_usd',
@@ -50,6 +52,7 @@
 	// History
 	let history = $state<Shift[]>([]);
 	let historyLoading = $state(false);
+	let shiftsDateRange = $state<DateRange>(rangeFromPreset('month'));
 
 	// Last closed shift's takings — shown in the open-shift greeting.
 	let yesterdaySummary = $state<{ orders: number; totalUsd: number } | null>(null);
@@ -106,6 +109,9 @@
 	});
 
 	const closedHistory = $derived(history.filter((s) => s.closed_at !== null));
+	const filteredShifts = $derived(
+		closedHistory.filter((s) => isInRange(s.opened_at, shiftsDateRange))
+	);
 
 	async function loadStats(): Promise<void> {
 		const active = shiftStore.active;
@@ -209,7 +215,7 @@
 	}
 
 	function getShiftsExportOptions() {
-		const rows = closedHistory.map((s) => ({
+		const rows = filteredShifts.map((s) => ({
 			numero: s.shift_number,
 			fecha: new Date(s.opened_at).toLocaleDateString('es-VE'),
 			duracion: formatDuration(s.opened_at, s.closed_at),
@@ -221,7 +227,7 @@
 		return {
 			filename: dateFilename('turnos'),
 			title: 'Historial de Turnos',
-			subtitle: `${rows.length} turnos`,
+			subtitle: `${rows.length} turnos · ${rangeLabel(shiftsDateRange)}`,
 			columns: [
 				{ key: 'numero', label: 'Turno #' },
 				{ key: 'fecha', label: 'Fecha' },
@@ -486,21 +492,24 @@
 
 	<!-- Shift history -->
 	<section class="flex flex-col gap-3">
-		<div class="flex items-center justify-between gap-3">
+		<div class="flex items-center justify-between gap-3 flex-wrap">
 			<h2 class="section-heading">{t('shifts.history')}</h2>
-			<ExportButton getExportOptions={getShiftsExportOptions} disabled={historyLoading} />
+			<div class="flex items-center gap-2">
+				<DateRangeFilter value={shiftsDateRange} onChange={(r) => (shiftsDateRange = r)} />
+				<ExportButton getExportOptions={getShiftsExportOptions} disabled={historyLoading} />
+			</div>
 		</div>
-		{#if historyLoading && closedHistory.length === 0}
+		{#if historyLoading && filteredShifts.length === 0}
 			<div class="flex justify-center py-8">
 				<LoadingSpinner />
 			</div>
-		{:else if closedHistory.length === 0}
+		{:else if filteredShifts.length === 0}
 			<Card padding="lg">
 				<EmptyState icon="clock" title={t('shifts.noHistory')} />
 			</Card>
 		{:else}
 			<div class="flex flex-col gap-3">
-				{#each closedHistory as s (s.id)}
+				{#each filteredShifts as s (s.id)}
 					<Card>
 						<div class="flex items-start justify-between gap-3">
 							<div class="flex flex-col gap-1">

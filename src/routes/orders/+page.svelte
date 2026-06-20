@@ -17,6 +17,8 @@
 	import OrderCard from '$lib/components/OrderCard.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
 	import { dateFilename } from '$lib/utils/export';
+	import DateRangeFilter from '$lib/components/DateRangeFilter.svelte';
+	import { rangeFromPreset, isInRange, rangeLabel, type DateRange } from '$lib/utils/dateRange';
 
 	type Tab = 'open' | 'history';
 
@@ -30,6 +32,7 @@
 	// History filters
 	let workerFilter = $state('');
 	let paymentFilter = $state('');
+	let historyDateRange = $state<DateRange>(rangeFromPreset('today'));
 
 	// Detail modal
 	let detailOpen = $state(false);
@@ -102,6 +105,7 @@
 		historyOrders.filter((o) => {
 			if (workerFilter && o.worker_name !== workerFilter) return false;
 			if (paymentFilter && o.payment_method !== paymentFilter) return false;
+			if (!isInRange(o.created_at, historyDateRange)) return false;
 			return true;
 		})
 	);
@@ -175,7 +179,7 @@
 		return {
 			filename: dateFilename('pedidos'),
 			title: 'Reporte de Pedidos',
-			subtitle: `${rows.length} pedidos · ${activeTab === 'open' ? 'Abiertos' : 'Historial'}`,
+			subtitle: `${rows.length} pedidos · ${activeTab === 'open' ? 'Abiertos' : rangeLabel(historyDateRange)}`,
 			columns: [
 				{ key: 'numero', label: '#' },
 				{ key: 'fecha', label: 'Fecha' },
@@ -217,7 +221,12 @@
 				{t('orders.tabHistory')}
 			</button>
 		</div>
-		<ExportButton getExportOptions={getOrdersExportOptions} />
+		<div class="page-top-right">
+			{#if activeTab === 'history'}
+				<DateRangeFilter value={historyDateRange} onChange={(r) => (historyDateRange = r)} />
+			{/if}
+			<ExportButton getExportOptions={getOrdersExportOptions} />
+		</div>
 	</div>
 
 	{#if activeTab === 'open'}
@@ -401,6 +410,14 @@
 
 	.tabs {
 		gap: 4px;
+	}
+
+	.page-top-right {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-shrink: 0;
+		padding-bottom: 6px;
 	}
 
 	.tab {

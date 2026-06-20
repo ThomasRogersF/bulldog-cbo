@@ -425,6 +425,15 @@ export const es = {
 		notImage: 'El archivo seleccionado no es una imagen',
 		tooLarge: 'La imagen es demasiado grande (máximo 10 MB)'
 	},
+	dateRange: {
+		today: 'Hoy',
+		yesterday: 'Ayer',
+		week: 'Esta semana',
+		month: 'Este mes',
+		all: 'Todo',
+		custom: 'Rango personalizado',
+		apply: 'Aplicar'
+	},
 	export: {
 		button: 'Exportar',
 		csvHint: 'Para hojas de cálculo y sistemas externos',
