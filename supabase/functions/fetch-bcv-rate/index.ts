@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { getAdminClient } from '../_shared/supabase.ts'
+import { handleOptions, jsonHeaders } from '../_shared/cors.ts'
 
 const BCV_API = 'https://ve.dolarapi.com/v1/dolares/oficial'
 
@@ -12,7 +13,10 @@ interface DolarApiResponse {
   fechaActualizacion: string
 }
 
-serve(async (_req) => {
+serve(async (req) => {
+  const preflight = handleOptions(req)
+  if (preflight) return preflight
+
   try {
     const supabase = getAdminClient()
 
@@ -57,7 +61,7 @@ serve(async (_req) => {
     if (lastSource === 'manual' && minutesSinceUpdate < 30) {
       return new Response(
         JSON.stringify({ ok: true, skipped: true, reason: 'recent manual override' }),
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: jsonHeaders }
       )
     }
 
@@ -79,14 +83,14 @@ serve(async (_req) => {
 
     return new Response(
       JSON.stringify({ ok: true, rate, fechaActualizacion: data.fechaActualizacion }),
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: jsonHeaders }
     )
 
   } catch (err) {
     console.error('fetch-bcv-rate failed:', err)
     return new Response(
       JSON.stringify({ ok: false, error: String(err) }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: jsonHeaders }
     )
   }
 })
