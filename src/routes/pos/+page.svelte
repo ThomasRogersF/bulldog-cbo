@@ -229,6 +229,7 @@
 		cartStore.orderType = order.order_type;
 		cartStore.customerId = order.customer_id;
 		cartStore.notes = order.notes ?? '';
+		cartStore.discount = order.discount_usd ?? 0;
 		for (const oi of order.items) {
 			const menuItem =
 				items.find((m) => m.id === oi.menu_item_id) ??
@@ -277,6 +278,7 @@
 				orderNumber = confirmed.order_number;
 				confirmedId = confirmed.id;
 			} else {
+				await ordersDb.replaceItems(cartStore.orderId, toLineInputs(cartStore.items));
 				const confirmed = await ordersDb.confirm(cartStore.orderId, {
 					method: payment,
 					discountUsd: cartStore.discount

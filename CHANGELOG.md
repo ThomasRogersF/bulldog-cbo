@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.5] — 2026-06-21
+
+Fix revenue-accuracy bug: items added to a parked order after resuming it were silently lost when the order was confirmed. Root cause — the cart store is in-memory only; for a resumed order, `confirmOrder()` called `ordersDb.confirm()` directly, which re-reads `order_items` from the DB. Any items added or removed from the cart after resuming were never written to the DB, so the confirmed order only contained what was present at the original park time. Fix: before confirming an existing order, call a new `ordersDb.replaceItems()` that deletes and re-inserts `order_items` from the current local cart, ensuring the DB matches exactly what the worker sees in the cart. Secondary fix: `loadExistingOrder()` now restores the parked order's discount to `cartStore.discount` (it was previously reset to 0 on resume). Adds a Playwright regression test for the park → resume → add → confirm flow.
+
 ## [0.1.4] — 2026-06-20
 
 Automatic BCV exchange rate fetching via `fetch-bcv-rate` Edge Function (dolarapi.com, every 30 minutes via pg_cron). Manual override in Settings still works and is respected for 30 minutes before auto-fetch resumes. Settings screen now shows the rate prominently with source label (Automática / Manual) and relative timestamp. Adds `usd_rate_source` and `usd_rate_fetched_from` settings keys, `settingsDb.refreshBcvRate()` in `db.ts`, and a "Actualizar desde BCV ahora" button for on-demand refresh. Edge Function runs with `verify_jwt = false` (no user input; public price feed).

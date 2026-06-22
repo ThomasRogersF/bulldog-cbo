@@ -856,6 +856,28 @@ export const ordersDb = {
 		if (error) throw new Error(error.message);
 		if (row) await recomputeOrderTotals(str(row.order_id));
 	},
+	// Replace all order_items for an open order with the given cart lines.
+	// Used before confirming a resumed parked order so the DB matches the local cart.
+	async replaceItems(orderId: string, items: CartLineInput[]): Promise<void> {
+		const { error: delErr } = await supabase.from('order_items').delete().eq('order_id', orderId);
+		if (delErr) throw new Error(delErr.message);
+		if (items.length) {
+			const lineTotals = items.map((i) => round2(i.unitPriceUsd * i.qty));
+			const payload = items.map((i, idx) => ({
+				id: uuidv7(),
+				order_id: orderId,
+				menu_item_id: i.menuItemId,
+				menu_item_snapshot: i.snapshot,
+				qty: i.qty,
+				unit_price_usd: i.unitPriceUsd,
+				line_total_usd: lineTotals[idx],
+				override_reason: i.overrideReason ?? null
+			}));
+			const { error: insErr } = await supabase.from('order_items').insert(payload);
+			if (insErr) throw new Error(insErr.message);
+		}
+		await recomputeOrderTotals(orderId);
+	},
 	async updateItemQty(orderItemId: string, qty: number): Promise<OrderItem> {
 		const cur = ok<Row>(
 			await supabase
