@@ -74,7 +74,12 @@
 		table:
 			'<rect x="3" y="3" width="18" height="18" rx="1.5" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" />',
 		file: '<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M13 2v7h7" />',
-		calendar: '<rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />'
+		calendar:
+			'<rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />',
+		'user-plus':
+			'<circle cx="10" cy="8" r="4" /><path d="M3 20a7 7 0 0 1 14 0" /><path d="M20 8v8M16 12h8" />',
+		'user-cog':
+			'<circle cx="9.5" cy="8" r="3.5" /><path d="M3.5 20c0-3.3 2.7-6 6-6h1" /><circle cx="20" cy="19.5" r="2" /><path d="M20 17.5v-.5m0 5v-.5m-2-2h-.5m4.5 0h.5m-1-1.9-.4.4m-3 3-.4.4m3.4.4-.4-.4m-3-3-.4-.4" />'
 	};
 
 	const inner = $derived(PATHS[name] ?? PATHS.grid);

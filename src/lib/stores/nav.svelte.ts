@@ -48,6 +48,7 @@ export const NAV_ITEMS: NavItem[] = [
 		roles: ['owner', 'worker'],
 		primary: false
 	},
+	{ href: '/users', labelKey: 'nav.users', icon: 'user-cog', roles: ['owner'], primary: false },
 	{ href: '/settings', labelKey: 'nav.settings', icon: 'gear', roles: ['owner'], primary: false }
 ];
 

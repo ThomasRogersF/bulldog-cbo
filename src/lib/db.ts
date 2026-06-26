@@ -106,6 +106,7 @@ function mapProfile(r: Row): Profile {
 	return {
 		id: str(r.id),
 		full_name: str(r.full_name),
+		username: str(r.username),
 		role: str(r.role) === 'owner' ? 'owner' : 'worker',
 		pin: strN(r.pin),
 		avatar_url: strN(r.avatar_url),
@@ -1228,6 +1229,66 @@ export const notificationsDb = {
 };
 
 export type { Setting };
+
+// ── Users (owner-only management) ────────────────────────────────────────────
+export const usersDb = {
+	async list(): Promise<Profile[]> {
+		const rows = ok<Row[]>(
+			await supabase.from('profiles').select('*').order('created_at', { ascending: true })
+		);
+		return rows.map(mapProfile);
+	},
+
+	async create(payload: {
+		full_name: string;
+		username: string;
+		password: string;
+		role?: 'owner' | 'worker';
+	}): Promise<{ ok: boolean; userId: string }> {
+		const { data: session } = await supabase.auth.getSession();
+		const token = session.session?.access_token;
+		const { data, error } = await supabase.functions.invoke('manage-user', {
+			body: { action: 'create', ...payload },
+			headers: { Authorization: `Bearer ${token}` }
+		});
+		if (error) throw error;
+		if (data?.error) throw new Error(data.error);
+		return data;
+	},
+
+	async deactivate(userId: string): Promise<void> {
+		const { data: session } = await supabase.auth.getSession();
+		const token = session.session?.access_token;
+		const { data, error } = await supabase.functions.invoke('manage-user', {
+			body: { action: 'deactivate', userId },
+			headers: { Authorization: `Bearer ${token}` }
+		});
+		if (error) throw error;
+		if (data?.error) throw new Error(data.error);
+	},
+
+	async reactivate(userId: string): Promise<void> {
+		const { data: session } = await supabase.auth.getSession();
+		const token = session.session?.access_token;
+		const { data, error } = await supabase.functions.invoke('manage-user', {
+			body: { action: 'reactivate', userId },
+			headers: { Authorization: `Bearer ${token}` }
+		});
+		if (error) throw error;
+		if (data?.error) throw new Error(data.error);
+	},
+
+	async resetPassword(userId: string, newPassword: string): Promise<void> {
+		const { data: session } = await supabase.auth.getSession();
+		const token = session.session?.access_token;
+		const { data, error } = await supabase.functions.invoke('manage-user', {
+			body: { action: 'reset_password', userId, newPassword },
+			headers: { Authorization: `Bearer ${token}` }
+		});
+		if (error) throw error;
+		if (data?.error) throw new Error(data.error);
+	}
+};
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 export const storageDb = {

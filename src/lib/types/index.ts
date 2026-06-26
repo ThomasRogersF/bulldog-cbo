@@ -31,6 +31,7 @@ export type GroupTag = 'vip' | 'regular' | 'crew' | 'wholesale';
 export interface Profile {
 	id: string;
 	full_name: string;
+	username: string;
 	role: Role;
 	pin: string | null;
 	avatar_url: string | null;

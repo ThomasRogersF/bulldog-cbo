@@ -26,6 +26,7 @@ export const es = {
 		ingredients: 'Ingredientes',
 		customers: 'Clientes',
 		shifts: 'Turnos',
+		users: 'Usuarios',
 		settings: 'Configuración',
 		more: 'Más',
 		signOut: 'Cerrar sesión',
@@ -43,6 +44,7 @@ export const es = {
 		menu: 'Productos y recetas',
 		customers: 'Clientes y crédito',
 		shifts: 'Apertura y cierre de caja',
+		users: 'Gestión de acceso al sistema',
 		settings: 'Ajustes del sistema'
 	},
 	pos: {
@@ -294,6 +296,37 @@ export const es = {
 		rateSourceAuto: 'Automática (BCV)',
 		rateSourceManual: 'Manual',
 		refreshFromBCV: '🔄 Actualizar desde BCV ahora'
+	},
+	users: {
+		title: 'Usuarios',
+		subtitle: 'Gestión de acceso al sistema',
+		newWorker: 'Nuevo trabajador',
+		fullName: 'Nombre completo',
+		username: 'Usuario',
+		usernameHint: 'Solo letras minúsculas, números y guión bajo',
+		usernameMin: 'Mínimo 3 caracteres',
+		usernameMax: 'Máximo 20 caracteres',
+		tempPassword: 'Contraseña temporal',
+		passwordHint: 'Mínimo 6 caracteres',
+		createWorker: 'Crear trabajador',
+		resetPassword: 'Restablecer contraseña',
+		newPassword: 'Nueva contraseña',
+		resetBtn: 'Restablecer',
+		deactivate: 'Desactivar',
+		reactivate: 'Reactivar',
+		active: 'Activo',
+		inactive: 'Desactivado',
+		you: 'Tú',
+		roleOwner: 'Dueño',
+		roleWorker: 'Trabajador',
+		deactivateConfirm:
+			'¿Desactivar a {name}? No podrá iniciar sesión hasta que se reactive su cuenta.',
+		created: 'Trabajador creado exitosamente',
+		deactivated: 'Usuario desactivado',
+		reactivated: 'Usuario reactivado',
+		passwordReset: 'Contraseña restablecida',
+		errorUsernameTaken: 'Este nombre de usuario ya está en uso',
+		changeMyPassword: 'Cambiar mi contraseña'
 	},
 	install: {
 		title: 'Instala Bulldog CBO',

@@ -16,6 +16,7 @@
 		'/menu': 'menu.title',
 		'/customers': 'customers.title',
 		'/shifts': 'shifts.title',
+		'/users': 'users.title',
 		'/settings': 'settings.title'
 	};
 	const SUBTITLES: Record<string, string> = {
@@ -26,6 +27,7 @@
 		'/menu': 'pageSubtitle.menu',
 		'/customers': 'pageSubtitle.customers',
 		'/shifts': 'pageSubtitle.shifts',
+		'/users': 'pageSubtitle.users',
 		'/settings': 'pageSubtitle.settings'
 	};
 

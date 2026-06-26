@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.6] — 2026-06-26
+
+Owner-only user management screen at /users. Owners can create worker accounts (username + temporary password), reset any user's password, deactivate accounts (bans the Supabase Auth session immediately), and reactivate them — all without touching the Supabase dashboard. User creation and auth operations go through a new `manage-user` Edge Function that uses the service role key. Route is protected by the root layout OWNER_ONLY guard; workers who navigate to /users are redirected to /pos.
+
 ## [0.1.5] — 2026-06-21
 
 Fix revenue-accuracy bug: items added to a parked order after resuming it were silently lost when the order was confirmed. Root cause — the cart store is in-memory only; for a resumed order, `confirmOrder()` called `ordersDb.confirm()` directly, which re-reads `order_items` from the DB. Any items added or removed from the cart after resuming were never written to the DB, so the confirmed order only contained what was present at the original park time. Fix: before confirming an existing order, call a new `ordersDb.replaceItems()` that deletes and re-inserts `order_items` from the current local cart, ensuring the DB matches exactly what the worker sees in the cart. Secondary fix: `loadExistingOrder()` now restores the parked order's discount to `cartStore.discount` (it was previously reset to 0 on resume). Adds a Playwright regression test for the park → resume → add → confirm flow.

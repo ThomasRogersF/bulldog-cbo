@@ -26,7 +26,7 @@
 
 	const themeCss = buildThemeCss();
 
-	const OWNER_ONLY = ['/dashboard', '/menu', '/ingredients', '/settings'];
+	const OWNER_ONLY = ['/dashboard', '/menu', '/ingredients', '/settings', '/users'];
 
 	// Bootstrap auth exactly once.
 	let started = false;
