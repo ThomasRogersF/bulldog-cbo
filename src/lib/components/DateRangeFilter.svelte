@@ -18,6 +18,8 @@
 	let open = $state(false);
 	let customFrom = $state('');
 	let customTo = $state('');
+	let triggerEl: HTMLButtonElement | null = $state(null);
+	let menuAnchor: 'left' | 'right' = $state('right');
 
 	const presets: { key: DateRangePreset; label: string }[] = [
 		{ key: 'today', label: t('dateRange.today') },
@@ -43,6 +45,10 @@
 	}
 
 	function toggle() {
+		if (!open && triggerEl) {
+			const rect = triggerEl.getBoundingClientRect();
+			menuAnchor = window.innerWidth - rect.left >= 276 ? 'left' : 'right';
+		}
 		open = !open;
 		if (open && value.from) {
 			customFrom = value.from.toISOString().slice(0, 10);
@@ -52,7 +58,7 @@
 </script>
 
 <div class="daterange">
-	<button class="daterange__trigger" onclick={toggle}>
+	<button bind:this={triggerEl} class="daterange__trigger" onclick={toggle}>
 		<Icon name="calendar" size={15} />
 		<span>{rangeLabel(value)}</span>
 		<Icon name="chevronDown" size={13} />
@@ -60,7 +66,10 @@
 
 	{#if open}
 		<div class="daterange__backdrop" onclick={() => (open = false)} role="presentation"></div>
-		<div class="daterange__menu">
+		<div
+			class="daterange__menu"
+			style={menuAnchor === 'left' ? 'left: 0; right: auto;' : 'right: 0; left: auto;'}
+		>
 			<div class="daterange__presets">
 				{#each presets as p (p.key)}
 					<button
@@ -134,15 +143,12 @@
 	.daterange__menu {
 		position: absolute;
 		top: calc(100% + 6px);
-		right: 0;
-		left: auto;
 		background: var(--color-surface);
 		border: 1px solid var(--color-line);
 		border-radius: var(--r-card);
 		box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
 		z-index: 45;
 		width: min(260px, calc(100vw - 32px));
-		max-width: 260px;
 		padding: 10px;
 	}
 
@@ -232,5 +238,18 @@
 	.daterange__apply:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
+	}
+
+	@media (max-width: 400px) {
+		.daterange__inputs {
+			flex-direction: column;
+			gap: 8px;
+		}
+		.daterange__sep {
+			display: none;
+		}
+		.daterange__date {
+			width: 100%;
+		}
 	}
 </style>
