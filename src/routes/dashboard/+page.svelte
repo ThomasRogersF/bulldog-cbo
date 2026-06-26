@@ -341,7 +341,7 @@
 							</div>
 							<div class="lowitem__qty tabular-nums">{formatQty(ing.current_stock, ing.unit)}</div>
 							<StockBar
-								current={ing.current_stock}
+								current={ing.current_stock ?? 0}
 								min={ing.min_stock}
 								unit={ing.unit}
 								showValue={false}

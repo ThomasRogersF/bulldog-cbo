@@ -165,6 +165,7 @@ function mapIngredient(r: Row): Ingredient {
 		name: str(r.name),
 		unit: str(r.unit) as Unit,
 		min_stock: num(r.min_stock),
+		is_tracked: bool(r.is_tracked),
 		created_at: str(r.created_at),
 		updated_at: str(r.updated_at),
 		deleted_at: strN(r.deleted_at)
@@ -180,7 +181,8 @@ function mapIngredientStock(r: Row): IngredientStock {
 		category_id: strN(r.category_id),
 		category_name: strN(r.category_name),
 		category_color: strN(r.category_color),
-		current_stock: num(r.current_stock),
+		is_tracked: bool(r.is_tracked),
+		current_stock: numN(r.current_stock),
 		is_low_stock: bool(r.is_low_stock),
 		is_out_of_stock: bool(r.is_out_of_stock),
 		deleted_at: strN(r.deleted_at)
@@ -652,7 +654,8 @@ export const ingredientsDb = {
 						name: input.name,
 						category_id: input.category_id ?? null,
 						unit: input.unit ?? 'unit',
-						min_stock: input.min_stock ?? 0
+						min_stock: input.min_stock ?? 0,
+						is_tracked: input.is_tracked ?? true
 					})
 					.select()
 					.single()
@@ -938,11 +941,13 @@ export const ordersDb = {
 			const recipeRows = ok<Row[]>(
 				await supabase
 					.from('recipes')
-					.select('menu_item_id, ingredient_id, qty_required')
+					.select('menu_item_id, ingredient_id, qty_required, ingredients(is_tracked)')
 					.in('menu_item_id', menuItemIds)
 			);
 			const byItem = new Map<string, { ingredient_id: string; qty_required: number }[]>();
 			for (const rr of recipeRows) {
+				const ing = rr.ingredients as Row | null;
+				if (ing && !bool(ing.is_tracked)) continue; // skip untracked ingredients
 				const mid = str(rr.menu_item_id);
 				const arr = byItem.get(mid) ?? [];
 				arr.push({ ingredient_id: str(rr.ingredient_id), qty_required: num(rr.qty_required) });

@@ -3,6 +3,10 @@
 All notable changes to Bulldog CBO are documented here.
 Format: `[version] [date] — description`
 
+## [0.1.7] — 2026-06-26
+
+Fix Ajustar stock: the modal now accepts the physical count (e.g. "80 buns") and computes the correct delta (80 − current = +20) before inserting into ingredient_ledger, instead of adding the typed value directly. UI shows current system stock read-only, a live "Diferencia" preview in green/red, and auto-generates a note if the user leaves it blank. Adds per-ingredient `is_tracked` flag: untracked ingredients (sauces, condiments) show ∞ in the stock card, never trigger low-stock alerts, are excluded from ledger deductions on order confirm, and can be toggled via a new Editar modal. Migration adds `is_tracked boolean not null default true` to the ingredients table and recreates the `ingredient_stock` view with conditional stock/low-stock logic.
+
 ## [0.1.6] — 2026-06-26
 
 Owner-only user management screen at /users. Owners can create worker accounts (username + temporary password), reset any user's password, deactivate accounts (bans the Supabase Auth session immediately), and reactivate them — all without touching the Supabase dashboard. User creation and auth operations go through a new `manage-user` Edge Function that uses the service role key. Route is protected by the root layout OWNER_ONLY guard; workers who navigate to /users are redirected to /pos.

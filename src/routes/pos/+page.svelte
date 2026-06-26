@@ -94,7 +94,7 @@
 
 			// ingredient_id -> current_stock
 			const stockMap = new SvelteMap<string, number>();
-			for (const s of stock) stockMap.set(s.id, s.current_stock);
+			for (const s of stock) stockMap.set(s.id, s.current_stock ?? 0);
 
 			// menu_item_id -> ingredient_ids[]
 			const recipesByItem = new SvelteMap<string, string[]>();

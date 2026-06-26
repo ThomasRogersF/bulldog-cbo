@@ -29,6 +29,7 @@
 
 	// 'low' = critical/out (red), 'mid' = low (amber), 'ok' = healthy (green)
 	function levelOf(it: IngredientStock): 'low' | 'mid' | 'ok' {
+		if (!it.is_tracked) return 'ok';
 		if (it.is_out_of_stock) return 'low';
 		if (it.is_low_stock) return 'mid';
 		return 'ok';
@@ -170,35 +171,44 @@
 	// ── Adjust modal ─────────────────────────────────────────────────
 	let adjustOpen = $state(false);
 	let adjustTarget = $state<IngredientStock | null>(null);
-	let adjustDelta = $state('');
+	let adjustNewStock = $state(''); // "set to" value typed by the user
 	let adjustNote = $state('');
 	let adjustSaving = $state(false);
 
+	// Live delta: null when input is empty/invalid/negative; 0 means "no change"
+	const adjustDiff = $derived(
+		adjustTarget &&
+			adjustNewStock !== '' &&
+			Number.isFinite(Number(adjustNewStock)) &&
+			Number(adjustNewStock) >= 0
+			? Number(adjustNewStock) - (adjustTarget.current_stock ?? 0)
+			: null
+	);
+
 	function openAdjust(item: IngredientStock) {
 		adjustTarget = item;
-		adjustDelta = '';
+		adjustNewStock = '';
 		adjustNote = '';
 		adjustOpen = true;
 	}
 
 	async function submitAdjust() {
 		if (!adjustTarget) return;
-		const delta = Number(adjustDelta);
-		if (!Number.isFinite(delta) || delta === 0) {
+		const target = Number(adjustNewStock);
+		if (!Number.isFinite(target) || target < 0) {
 			toast.error(t('validation.invalidNumber'));
 			return;
 		}
-		if (!adjustNote.trim()) {
-			toast.error(t('validation.noteRequired'));
-			return;
-		}
+		const current = adjustTarget.current_stock ?? 0;
+		const delta = target - current;
+		if (delta === 0) return;
 		adjustSaving = true;
 		try {
 			await ingredientsDb.ledger.addMovement({
 				ingredientId: adjustTarget.id,
 				qtyChange: delta,
 				reason: 'adjustment',
-				note: adjustNote.trim()
+				note: adjustNote.trim() || `Ajuste manual: ${current} → ${target}`
 			});
 			toast.success(t('toasts.movementRegistered'));
 			adjustOpen = false;
@@ -218,6 +228,7 @@
 	let addUnit = $state<Unit>('unit');
 	let addMinStock = $state('');
 	let addOpeningCount = $state('');
+	let addIsTracked = $state(true);
 	let addSaving = $state(false);
 
 	const UNITS: Unit[] = ['unit', 'g', 'ml', 'kg', 'l'];
@@ -228,17 +239,65 @@
 		addUnit = 'unit';
 		addMinStock = '';
 		addOpeningCount = '';
+		addIsTracked = true;
 		addOpen = true;
+	}
+
+	// ── Edit ingredient modal ─────────────────────────────────────────
+	let editOpen = $state(false);
+	let editTarget = $state<IngredientStock | null>(null);
+	let editName = $state('');
+	let editCategory = $state('');
+	let editUnit = $state<Unit>('unit');
+	let editMinStock = $state('');
+	let editIsTracked = $state(true);
+	let editSaving = $state(false);
+
+	function openEdit(item: IngredientStock) {
+		editTarget = item;
+		editName = item.name;
+		editCategory = item.category_id ?? '';
+		editUnit = item.unit;
+		editMinStock = String(item.min_stock);
+		editIsTracked = item.is_tracked;
+		editOpen = true;
+	}
+
+	async function submitEdit() {
+		if (!editTarget || !editName.trim()) return;
+		editSaving = true;
+		try {
+			await ingredientsDb.items.update(editTarget.id, {
+				name: editName.trim(),
+				category_id: editCategory || null,
+				unit: editUnit,
+				min_stock: editMinStock ? Number(editMinStock) : 0,
+				is_tracked: editIsTracked
+			});
+			toast.success(t('ingredients.saved'));
+			editOpen = false;
+			await loadStock();
+		} catch {
+			toast.error(t('toasts.saveFailed'));
+		} finally {
+			editSaving = false;
+		}
 	}
 
 	function getStockExportOptions() {
 		const rows = filteredItems.map((i) => ({
 			nombre: i.name,
 			categoria: i.category_name ?? '',
-			stock_actual: i.current_stock,
+			stock_actual: i.is_tracked ? (i.current_stock ?? 0) : t('ingredients.infinite'),
 			unidad: t('units.' + i.unit),
-			stock_minimo: i.min_stock,
-			estado: i.is_out_of_stock ? 'Agotado' : i.is_low_stock ? 'Bajo' : 'OK'
+			stock_minimo: i.is_tracked ? i.min_stock : '—',
+			estado: !i.is_tracked
+				? t('ingredients.untracked')
+				: i.is_out_of_stock
+					? 'Agotado'
+					: i.is_low_stock
+						? 'Bajo'
+						: 'OK'
 		}));
 		return {
 			filename: dateFilename('inventario'),
@@ -297,6 +356,7 @@
 				category_id: addCategory || null,
 				unit: addUnit,
 				min_stock: addMinStock ? Number(addMinStock) : 0,
+				is_tracked: addIsTracked,
 				openingCount: addOpeningCount ? Number(addOpeningCount) : 0
 			});
 			toast.success(t('ingredients.saved'));
@@ -395,53 +455,75 @@
 								</div>
 							</div>
 							<div class="ing__qty tabular-nums">
-								{formatQty(item.current_stock)}<span>{t('units.' + item.unit)}</span>
+								{#if item.is_tracked}
+									{formatQty(item.current_stock ?? 0)}<span>{t('units.' + item.unit)}</span>
+								{:else}
+									<span class="ing__infinite">{t('ingredients.infinite')}</span>
+								{/if}
 							</div>
 						</div>
 
-						<div class="ing__barwrap">
-							<StockBar
-								current={item.current_stock}
-								min={item.min_stock}
-								unit={item.unit}
-								showValue={false}
-							/>
-							<div class="ing__meta">
-								<span class="ing__pct"
-									>{t('ingredients.minStock')}:
-									<b class="tabular-nums">{formatQty(item.min_stock, item.unit)}</b></span
-								>
-								<Badge
-									variant={level === 'low' ? 'danger' : level === 'mid' ? 'warning' : 'success'}
-								>
-									{level === 'low'
-										? t('ingredients.outOfStock')
-										: level === 'mid'
-											? t('ingredients.lowStock')
-											: t('status.confirmed')}
-								</Badge>
+						{#if item.is_tracked}
+							<div class="ing__barwrap">
+								<StockBar
+									current={item.current_stock ?? 0}
+									min={item.min_stock}
+									unit={item.unit}
+									showValue={false}
+								/>
+								<div class="ing__meta">
+									<span class="ing__pct"
+										>{t('ingredients.minStock')}:
+										<b class="tabular-nums">{formatQty(item.min_stock, item.unit)}</b></span
+									>
+									<Badge
+										variant={level === 'low' ? 'danger' : level === 'mid' ? 'warning' : 'success'}
+									>
+										{level === 'low'
+											? t('ingredients.outOfStock')
+											: level === 'mid'
+												? t('ingredients.lowStock')
+												: t('status.confirmed')}
+									</Badge>
+								</div>
 							</div>
-						</div>
+						{:else}
+							<div>
+								<Badge variant="neutral">{t('ingredients.untracked')}</Badge>
+							</div>
+						{/if}
 
 						<div class="ing__btns">
-							<Button
-								variant="primary"
-								size="sm"
-								icon="refill"
-								full
-								onclick={() => openRestock(item)}
-							>
-								{t('ingredients.restock')}
-							</Button>
-							<Button
-								variant="secondary"
-								size="sm"
-								icon="edit"
-								full
-								onclick={() => openAdjust(item)}
-							>
-								{t('ingredients.adjust')}
-							</Button>
+							{#if item.is_tracked}
+								<Button
+									variant="primary"
+									size="sm"
+									icon="refill"
+									full
+									onclick={() => openRestock(item)}
+								>
+									{t('ingredients.restock')}
+								</Button>
+								<Button
+									variant="secondary"
+									size="sm"
+									icon="edit"
+									full
+									onclick={() => openAdjust(item)}
+								>
+									{t('ingredients.adjust')}
+								</Button>
+							{:else}
+								<Button
+									variant="secondary"
+									size="sm"
+									icon="edit"
+									full
+									onclick={() => openEdit(item)}
+								>
+									{t('ingredients.editBtn')}
+								</Button>
+							{/if}
 						</div>
 					</div>
 				{/each}
@@ -547,35 +629,57 @@
 </Modal>
 
 <!-- Adjust modal -->
-<Modal bind:open={adjustOpen} title={adjustTarget?.name ?? t('ingredients.adjustTitle')}>
+<Modal bind:open={adjustOpen} title={t('ingredients.adjustTitle')}>
 	<div class="flex flex-col gap-4">
 		{#if adjustTarget}
 			<div class="modal-stat">
-				<span class="modal-stat-label">{t('ingredients.currentStock')}</span>
+				<span class="modal-stat-label">{t('ingredients.adjustCurrentLabel')}</span>
 				<span class="modal-stat-value tabular-nums">
-					{formatQty(adjustTarget.current_stock, adjustTarget.unit)}
+					{formatQty(adjustTarget.current_stock ?? 0, adjustTarget.unit)}
 				</span>
 			</div>
+			<Input
+				label={t('ingredients.adjustTargetLabel')}
+				type="number"
+				inputmode="decimal"
+				bind:value={adjustNewStock}
+				placeholder="0"
+				helper={t('ingredients.adjustTargetHint')}
+			/>
+			{#if adjustDiff !== null}
+				{#if adjustDiff === 0}
+					<p class="adjust-diff adjust-diff--neutral">{t('ingredients.adjustNoChange')}</p>
+				{:else if adjustDiff > 0}
+					<p class="adjust-diff adjust-diff--up">
+						+{adjustDiff}
+						{t('units.' + adjustTarget.unit)} ↑
+					</p>
+				{:else}
+					<p class="adjust-diff adjust-diff--down">
+						-{Math.abs(adjustDiff)}
+						{t('units.' + adjustTarget.unit)} ↓
+					</p>
+				{/if}
+			{/if}
+			<Input
+				label={t('ingredients.note')}
+				bind:value={adjustNote}
+				placeholder={t('ingredients.notePlaceholder')}
+				helper={t('common.optional')}
+			/>
 		{/if}
-		<Input
-			label={t('ingredients.quantity')}
-			type="number"
-			inputmode="decimal"
-			bind:value={adjustDelta}
-			placeholder="0"
-		/>
-		<Input
-			label={t('ingredients.note')}
-			bind:value={adjustNote}
-			placeholder={t('ingredients.notePlaceholder')}
-			helper={t('common.required')}
-		/>
 		<div class="flex gap-2">
 			<Button variant="ghost" full onclick={() => (adjustOpen = false)}>
 				{t('common.cancel')}
 			</Button>
-			<Button variant="primary" full loading={adjustSaving} onclick={submitAdjust}>
-				{t('ingredients.registerMovement')}
+			<Button
+				variant="primary"
+				full
+				loading={adjustSaving}
+				disabled={adjustNewStock === '' || Number(adjustNewStock) < 0 || adjustDiff === 0}
+				onclick={submitAdjust}
+			>
+				{t('ingredients.adjustBtn')}
 			</Button>
 		</div>
 	</div>
@@ -611,11 +715,58 @@
 			placeholder="0"
 			helper={t('common.optional')}
 		/>
+		<label class="tracked-toggle">
+			<input type="checkbox" bind:checked={addIsTracked} />
+			<span class="tracked-toggle__text">
+				{t('ingredients.isTracked')}
+				<small>{t('ingredients.isTrackedHint')}</small>
+			</span>
+		</label>
 		<div class="flex gap-2">
 			<Button variant="ghost" full onclick={() => (addOpen = false)}>
 				{t('common.cancel')}
 			</Button>
 			<Button variant="primary" full loading={addSaving} onclick={submitAdd}>
+				{t('common.save')}
+			</Button>
+		</div>
+	</div>
+</Modal>
+
+<!-- Edit ingredient modal -->
+<Modal bind:open={editOpen} title={t('ingredients.edit')}>
+	<div class="flex flex-col gap-4">
+		<Input label={t('ingredients.name')} bind:value={editName} />
+		<Select
+			label={t('ingredients.category')}
+			bind:value={editCategory}
+			placeholder={t('common.none')}
+			options={categories.map((c) => ({ value: c.id, label: c.name }))}
+		/>
+		<Select
+			label={t('ingredients.unit')}
+			bind:value={editUnit}
+			options={UNITS.map((u) => ({ value: u, label: t('units.' + u) }))}
+		/>
+		<Input
+			label={t('ingredients.minStock')}
+			type="number"
+			inputmode="decimal"
+			bind:value={editMinStock}
+			placeholder="0"
+		/>
+		<label class="tracked-toggle">
+			<input type="checkbox" bind:checked={editIsTracked} />
+			<span class="tracked-toggle__text">
+				{t('ingredients.isTracked')}
+				<small>{t('ingredients.isTrackedHint')}</small>
+			</span>
+		</label>
+		<div class="flex gap-2">
+			<Button variant="ghost" full onclick={() => (editOpen = false)}>
+				{t('common.cancel')}
+			</Button>
+			<Button variant="primary" full loading={editSaving} onclick={submitEdit}>
 				{t('common.save')}
 			</Button>
 		</div>
@@ -908,6 +1059,60 @@
 		font-weight: 800;
 		color: var(--color-text);
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* Adjust diff preview */
+	.adjust-diff {
+		font-size: 14px;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		margin: 0;
+	}
+	.adjust-diff--up {
+		color: var(--color-green);
+	}
+	.adjust-diff--down {
+		color: var(--color-red);
+	}
+	.adjust-diff--neutral {
+		color: var(--color-text-faint);
+	}
+
+	/* Untracked ingredient infinite symbol */
+	.ing__infinite {
+		font-size: 28px;
+		color: var(--color-text-faint);
+		line-height: 1;
+		font-weight: 800;
+	}
+
+	/* Tracked toggle checkbox row */
+	.tracked-toggle {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		cursor: pointer;
+		padding: 10px 0;
+	}
+	.tracked-toggle input[type='checkbox'] {
+		margin-top: 2px;
+		flex: none;
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+	}
+	.tracked-toggle__text {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-text);
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.tracked-toggle__text small {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--color-text-faint);
 	}
 
 	/* FAB */

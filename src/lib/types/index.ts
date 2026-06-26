@@ -81,6 +81,7 @@ export interface Ingredient {
 	name: string;
 	unit: Unit;
 	min_stock: number;
+	is_tracked: boolean;
 	created_at: string;
 	updated_at: string;
 	deleted_at: string | null;
@@ -95,7 +96,8 @@ export interface IngredientStock {
 	category_id: string | null;
 	category_name: string | null;
 	category_color: string | null;
-	current_stock: number;
+	is_tracked: boolean;
+	current_stock: number | null; // null when is_tracked = false (infinite)
 	is_low_stock: boolean;
 	is_out_of_stock: boolean;
 	deleted_at: string | null;
@@ -311,6 +313,7 @@ export interface NewIngredient {
 	category_id?: string | null;
 	unit?: Unit;
 	min_stock?: number;
+	is_tracked?: boolean;
 	openingCount?: number;
 }
 

@@ -168,7 +168,17 @@ export const es = {
 		filterIngredient: 'Ingrediente',
 		filterReason: 'Motivo',
 		allReasons: 'Todos',
-		saved: 'Ingrediente guardado'
+		saved: 'Ingrediente guardado',
+		editBtn: 'Editar',
+		adjustCurrentLabel: 'Stock actual en sistema',
+		adjustTargetLabel: 'Stock real (cuenta física)',
+		adjustTargetHint: 'Ingresa lo que tienes ahora',
+		adjustNoChange: 'Sin cambio',
+		adjustBtn: 'Aplicar ajuste',
+		isTracked: 'Contabilizar stock',
+		isTrackedHint: 'Desactiva para ingredientes ilimitados (salsas, condimentos)',
+		untracked: 'No contabilizado',
+		infinite: '∞'
 	},
 	menu: {
 		title: 'Menú',
